@@ -19,21 +19,20 @@ from src.agents.outreach_agent import EmpatheticOutreachAgent
 def render_bank_view(df_portfolio: pd.DataFrame):
     """Render the Underwriter Command Center and Risk Triage Queue."""
     st.markdown(
-        """
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
-            <div>
-                <h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
-                    🏦 Portfolio Risk Triage & Command Center
-                </h2>
-                <p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
-                    Real-time unsupervised stress detection, non-linear early distress clustering, and automated restructuring queue.
-                </p>
-            </div>
-            <div style="text-align: right;">
-                <span class="seal-badge">AUDIT VERIFIED</span>
-            </div>
-        </div>
-        """,
+        """<div id="underwriter-command-center"></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+<div>
+<h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
+🏦 Portfolio Risk Triage & Command Center
+</h2>
+<p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
+Real-time unsupervised stress detection, non-linear early distress clustering, and automated restructuring queue.
+</p>
+</div>
+<div style="text-align: right;">
+<span class="seal-badge">AUDIT VERIFIED</span>
+</div>
+</div>""",
         unsafe_allow_html=True,
     )
 
@@ -43,60 +42,50 @@ def render_bank_view(df_portfolio: pd.DataFrame):
     m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
         st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">Active Portfolio</div>
-                <div class="kpi-value">{kpis.get('total_accounts', 0):,}</div>
-                <div class="kpi-subtext">Borrower Accounts Monitored</div>
-            </div>
-            """,
+            f"""<div class="kpi-card">
+<div class="kpi-label">Active Portfolio</div>
+<div class="kpi-value">{kpis.get('total_accounts', 0):,}</div>
+<div class="kpi-subtext">Borrower Accounts Monitored</div>
+</div>""",
             unsafe_allow_html=True,
         )
     with m2:
         # Imperial Pine Hero Card
         st.markdown(
-            f"""
-            <div class="kpi-card kpi-card-hero">
-                <div class="kpi-label">Total Outstanding</div>
-                <div class="kpi-value">₹{kpis.get('total_principal_outstanding', 0)/1e7:.2f} Cr</div>
-                <div class="kpi-subtext">
-                    <span style="color: #F7EBD9; font-weight: 700;">↑ 100% Monitored</span> • Active Book
-                </div>
-            </div>
-            """,
+            f"""<div class="kpi-card kpi-card-hero">
+<div class="kpi-label">Total Outstanding</div>
+<div class="kpi-value">₹{kpis.get('total_principal_outstanding', 0)/1e7:.2f} Cr</div>
+<div class="kpi-subtext">
+<span style="color: #F7EBD9; font-weight: 700;">↑ 100% Monitored</span> • Active Book
+</div>
+</div>""",
             unsafe_allow_html=True,
         )
     with m3:
         st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">Stress Anomaly Rate</div>
-                <div class="kpi-value" style="color: #961515;">{kpis.get('anomaly_prevalence_pct', 0):.1f}%</div>
-                <div class="kpi-subtext">{kpis.get('anomaly_count', 0)} High Distress Accounts</div>
-            </div>
-            """,
+            f"""<div class="kpi-card">
+<div class="kpi-label">Stress Anomaly Rate</div>
+<div class="kpi-value" style="color: #961515;">{kpis.get('anomaly_prevalence_pct', 0):.1f}%</div>
+<div class="kpi-subtext">{kpis.get('anomaly_count', 0)} High Distress Accounts</div>
+</div>""",
             unsafe_allow_html=True,
         )
     with m4:
         st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">Portfolio at Risk (30+)</div>
-                <div class="kpi-value" style="color: #7A530A;">₹{kpis.get('par_30_exposure', 0)/1e5:.1f} L</div>
-                <div class="kpi-subtext">{kpis.get('par_30_pct', 0):.1f}% of Active Book</div>
-            </div>
-            """,
+            f"""<div class="kpi-card">
+<div class="kpi-label">Portfolio at Risk (30+)</div>
+<div class="kpi-value" style="color: #7A530A;">₹{kpis.get('par_30_exposure', 0)/1e5:.1f} L</div>
+<div class="kpi-subtext">{kpis.get('par_30_pct', 0):.1f}% of Active Book</div>
+</div>""",
             unsafe_allow_html=True,
         )
     with m5:
         st.markdown(
-            f"""
-            <div class="kpi-card">
-                <div class="kpi-label">Projected NPA Avoided</div>
-                <div class="kpi-value" style="color: #0A523E;">₹{kpis.get('projected_npa_avoided', 0)/1e5:.1f} L</div>
-                <div class="kpi-subtext">Via Proactive Relief (~68% cure)</div>
-            </div>
-            """,
+            f"""<div class="kpi-card">
+<div class="kpi-label">Projected NPA Avoided</div>
+<div class="kpi-value" style="color: #0A523E;">₹{kpis.get('projected_npa_avoided', 0)/1e5:.1f} L</div>
+<div class="kpi-subtext">Via Proactive Relief (~68% cure)</div>
+</div>""",
             unsafe_allow_html=True,
         )
 
@@ -115,9 +104,9 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             hole=0.55,
             color="Risk Tier",
             color_discrete_map={
-                "Tier 1 (Normal / Low Risk)": "#0A4D3C",           # Pine Jade
-                "Tier 2 (Moderate Stress)": "#C5A880",            # Kintsugi Gold
-                "Tier 3 (High Anomaly / Severe Distress)": "#961515", # Alert Crimson
+                "Tier 1 (Normal / Low Risk)": "#0A4D3C",
+                "Tier 2 (Moderate Stress)": "#C5A880",
+                "Tier 3 (High Anomaly / Severe Distress)": "#961515",
             },
         )
         fig_pie.update_layout(
@@ -140,9 +129,9 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             hover_data=["customer_id", "name", "anomaly_score"],
             title="Spend vs. EMI Burden Matrix (Size = Loan Principal)",
             color_discrete_map={
-                "Tier 1 (Normal / Low Risk)": "#0A4D3C",           # Pine Jade
-                "Tier 2 (Moderate Stress)": "#C5A880",            # Kintsugi Gold
-                "Tier 3 (High Anomaly / Severe Distress)": "#961515", # Alert Crimson
+                "Tier 1 (Normal / Low Risk)": "#0A4D3C",
+                "Tier 2 (Moderate Stress)": "#C5A880",
+                "Tier 3 (High Anomaly / Severe Distress)": "#961515",
             },
         )
         fig_scatter.add_vline(x=0.7, line_dash="dash", line_color="#C5A880", opacity=0.85)
@@ -164,16 +153,18 @@ def render_bank_view(df_portfolio: pd.DataFrame):
     # 3. Triage Queue & Filterable Table
     st.markdown("---")
     st.markdown(
-        """
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0; font-weight: 800;">
-                📋 Underwriter Triage Queue
-            </h3>
-            <span style="font-size: 0.85rem; font-weight: 700; color: #12211C;">Ranked by Unsupervised Stress Anomaly Score</span>
-        </div>
-        """,
+        """<div id="triage-queue-section"></div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+<h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0; font-weight: 800;">
+📋 Underwriter Triage Queue
+</h3>
+<span style="font-size: 0.85rem; font-weight: 700; color: #12211C;">Ranked by Unsupervised Stress Anomaly Score</span>
+</div>""",
         unsafe_allow_html=True,
     )
+
+    # Synchronize with global search from top header
+    global_query = st.session_state.get("global_portfolio_search", "").strip()
 
     f1, f2, f3 = st.columns([2, 2, 3])
     with f1:
@@ -184,19 +175,29 @@ def render_bank_view(df_portfolio: pd.DataFrame):
     with f2:
         min_score = st.slider("Minimum Anomaly Score", 0.0, 1.0, 0.0, 0.05)
     with f3:
-        search_query = st.text_input("🔍 Search Borrower Name or ID", "")
+        search_query = st.text_input(
+            "🔍 Search Borrower Name, ID, or Drivers",
+            value=global_query,
+            key="triage_local_search",
+            placeholder="Type customer ID, name, or driver...",
+        )
+
+    # Determine effective search term
+    effective_query = search_query.strip() if search_query.strip() else global_query
 
     filtered_df = df_portfolio.copy()
     if tier_filter != "All Tiers":
         filtered_df = filtered_df[filtered_df["risk_tier"] == tier_filter]
     if min_score > 0.0:
         filtered_df = filtered_df[filtered_df["anomaly_score"] >= min_score]
-    if search_query:
+    if effective_query:
         mask = (
-            filtered_df["customer_id"].str.contains(search_query, case=False, na=False)
-            | filtered_df["name"].str.contains(search_query, case=False, na=False)
+            filtered_df["customer_id"].astype(str).str.contains(effective_query, case=False, na=False)
+            | filtered_df["name"].astype(str).str.contains(effective_query, case=False, na=False)
+            | filtered_df["primary_drivers"].astype(str).str.contains(effective_query, case=False, na=False)
         )
         filtered_df = filtered_df[mask]
+        st.info(f"🔍 Filtered by query **'{effective_query}'** — {len(filtered_df):,} matching borrower account(s).")
 
     # Display clean table
     display_cols = [
@@ -233,15 +234,14 @@ def render_bank_view(df_portfolio: pd.DataFrame):
     # 4. Deep Dive & Restructuring Action Center
     st.markdown("---")
     st.markdown(
-        """
-        <h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 16px 0; font-weight: 800;">
-            ⚡ Case Review & Restructuring Action Center
-        </h3>
-        """,
+        """<div id="restructuring-action-center"></div>
+<h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 16px 0; font-weight: 800;">
+⚡ Case Review & Restructuring Action Center
+</h3>""",
         unsafe_allow_html=True,
     )
 
-    triage_options = filtered_df["customer_id"].tolist() if not filtered_df.empty else []
+    triage_options = filtered_df["customer_id"].tolist() if not filtered_df.empty else df_portfolio["customer_id"].tolist()
     default_select_idx = triage_options.index("CUST-4141") if "CUST-4141" in triage_options else 0
 
     selected_id = st.selectbox(
@@ -278,44 +278,41 @@ def render_bank_view(df_portfolio: pd.DataFrame):
         c_info, c_action = st.columns([1, 1])
 
         with c_info:
-            st.markdown(
-                f"""
-                <div class="glass-panel" style="border-top: 3.5px solid #C5A880;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                        <div>
-                            <h4 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.25rem;">{cust_name}</h4>
-                            <span style="font-size: 0.84rem; color: #664614; font-weight: 700;">ID: {cust_id} • Phone: {cust_phone}</span>
-                        </div>
-                        <span class="badge-tier-3">{tier_label}</span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
-                        <div style="background: rgba(158, 28, 28, 0.12); border: 1px solid rgba(158, 28, 28, 0.35); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.72rem; color: #961515; text-transform: uppercase; font-weight: 800;">Deal Surge</div>
-                            <div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">+{deal_surge_pct:.1f}%</div>
-                            <div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Coupon Reliance</div>
-                        </div>
-                        <div style="background: rgba(197, 168, 128, 0.18); border: 1px solid rgba(197, 168, 128, 0.45); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.72rem; color: #7A530A; text-transform: uppercase; font-weight: 800;">Discretionary</div>
-                            <div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">{disc_compression_pct:.0f}%</div>
-                            <div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Spend Share</div>
-                        </div>
-                        <div style="background: rgba(10, 82, 62, 0.12); border: 1px solid rgba(10, 82, 62, 0.35); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.72rem; color: #0A523E; text-transform: uppercase; font-weight: 800;">Liquid Runway</div>
-                            <div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">{runway_mo:.2f} Mo</div>
-                            <div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Cash Buffer</div>
-                        </div>
-                    </div>
-
-                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Monthly Income:</strong> ₹{monthly_inc:,.2f} | <strong>Current EMI:</strong> ₹{curr_emi:,.2f}</p>
-                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Remaining Principal:</strong> ₹{rem_principal:,.2f} @ {apr_rate*100:.1f}% APR ({rem_tenure} mos)</p>
-                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Liquid Savings:</strong> ₹{savings_bal:,.2f} | <strong>Credit Utilization:</strong> {credit_util*100:.1f}%</p>
-                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Payment Friction:</strong> {late_days} late days in last 6 months</p>
-                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Primary Drivers:</strong> <span style="color: #961515; font-weight: 700;">{drivers}</span></p>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            # Render clean HTML without ANY leading whitespace to prevent Markdown code block triggers
+            info_html = (
+                f'<div class="glass-panel" style="border-top: 3.5px solid #C5A880;">'
+                f'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">'
+                f'<div>'
+                f'<h4 style="margin: 0; color: #08201A; font-family: \'Cinzel\', serif; font-size: 1.25rem;">{cust_name}</h4>'
+                f'<span style="font-size: 0.84rem; color: #664614; font-weight: 700;">ID: {cust_id} • Phone: {cust_phone}</span>'
+                f'</div>'
+                f'<span class="badge-tier-3">{tier_label}</span>'
+                f'</div>'
+                f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">'
+                f'<div style="background: rgba(158, 28, 28, 0.12); border: 1.5px solid rgba(158, 28, 28, 0.40); border-radius: 10px; padding: 10px; text-align: center;">'
+                f'<div style="font-size: 0.72rem; color: #961515; text-transform: uppercase; font-weight: 800;">Deal Surge</div>'
+                f'<div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">+{deal_surge_pct:.1f}%</div>'
+                f'<div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Coupon Reliance</div>'
+                f'</div>'
+                f'<div style="background: rgba(197, 168, 128, 0.18); border: 1.5px solid rgba(197, 168, 128, 0.50); border-radius: 10px; padding: 10px; text-align: center;">'
+                f'<div style="font-size: 0.72rem; color: #7A530A; text-transform: uppercase; font-weight: 800;">Discretionary</div>'
+                f'<div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">{disc_compression_pct:.0f}%</div>'
+                f'<div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Spend Share</div>'
+                f'</div>'
+                f'<div style="background: rgba(10, 82, 62, 0.12); border: 1.5px solid rgba(10, 82, 62, 0.40); border-radius: 10px; padding: 10px; text-align: center;">'
+                f'<div style="font-size: 0.72rem; color: #0A523E; text-transform: uppercase; font-weight: 800;">Liquid Runway</div>'
+                f'<div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">{runway_mo:.2f} Mo</div>'
+                f'<div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Cash Buffer</div>'
+                f'</div>'
+                f'</div>'
+                f'<p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Monthly Income:</strong> ₹{monthly_inc:,.2f} | <strong>Current EMI:</strong> ₹{curr_emi:,.2f}</p>'
+                f'<p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Remaining Principal:</strong> ₹{rem_principal:,.2f} @ {apr_rate*100:.1f}% APR ({rem_tenure} mos)</p>'
+                f'<p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Liquid Savings:</strong> ₹{savings_bal:,.2f} | <strong>Credit Utilization:</strong> {credit_util*100:.1f}%</p>'
+                f'<p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Payment Friction:</strong> {late_days} late days in last 6 months</p>'
+                f'<p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Primary Drivers:</strong> <span style="color: #961515; font-weight: 800;">{drivers}</span></p>'
+                f'</div>'
             )
+            st.markdown(info_html, unsafe_allow_html=True)
 
         with c_action:
             st.markdown("<h5 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>🛠️ Restructuring Parameters</h5>", unsafe_allow_html=True)
@@ -366,19 +363,15 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             # Professional Animation & Feedback (Replaces Balloons)
             if st.button("🚀 Approve Restructuring & Dispatch Proactive Offer"):
                 st.toast(f"Restructuring Plan Registered for {cust_name}", icon="✨")
-                st.markdown(
-                    f"""
-                    <div class="kintsugi-success-banner">
-                        <div class="kintsugi-success-icon">✓</div>
-                        <div>
-                            <h4 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.1rem;">
-                                Restructuring Approved & Active
-                            </h4>
-                            <p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">
-                                Proposal registered and empathetic notification dispatched to <strong>{cust_name}</strong> ({cust_id}). Ledger updated.
-                            </p>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
+                banner_html = (
+                    f'<div class="kintsugi-success-banner">'
+                    f'<div class="kintsugi-success-icon">✓</div>'
+                    f'<div>'
+                    f'<h4 style="margin: 0; color: #08201A; font-family: \'Cinzel\', serif; font-size: 1.1rem;">Restructuring Approved & Active</h4>'
+                    f'<p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">'
+                    f'Proposal registered and empathetic notification dispatched to <strong>{cust_name}</strong> ({cust_id}). Ledger updated.'
+                    f'</p>'
+                    f'</div>'
+                    f'</div>'
                 )
+                st.markdown(banner_html, unsafe_allow_html=True)

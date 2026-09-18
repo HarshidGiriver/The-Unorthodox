@@ -17,21 +17,20 @@ from src.config import BANK_NAME, BANK_GRIEVANCE_OFFICER_NAME, BANK_GRIEVANCE_OF
 def render_customer_view(df_portfolio: pd.DataFrame):
     """Render the Borrower Relief Simulator and Self-Service Portal."""
     st.markdown(
-        """
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
-            <div>
-                <h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
-                    📱 Borrower Relief Simulator & Self-Service Portal
-                </h2>
-                <p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
-                    A transparent, stress-free space designed to help you regain financial breathing room and rebuild credit health.
-                </p>
-            </div>
-            <div style="text-align: right;">
-                <span class="seal-badge">FAIR PRACTICES COMPLIANT</span>
-            </div>
-        </div>
-        """,
+        """<div id="customer-portal-header"></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+<div>
+<h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
+📱 Borrower Relief Simulator & Self-Service Portal
+</h2>
+<p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
+A transparent, stress-free space designed to help you regain financial breathing room and rebuild credit health.
+</p>
+</div>
+<div style="text-align: right;">
+<span class="seal-badge">FAIR PRACTICES COMPLIANT</span>
+</div>
+</div>""",
         unsafe_allow_html=True,
     )
 
@@ -57,37 +56,35 @@ def render_customer_view(df_portfolio: pd.DataFrame):
     baseline_tenure = int(customer.get("remaining_tenure_months", 24))
     annual_rate = float(customer.get("annual_interest_rate", 0.14))
 
-    # Container Card (Mild Glassmorphism: 70% Opaque)
-    st.markdown(
-        f"""
-        <div class="glass-panel" style="max-width: 820px; margin: 0 auto 24px auto; border-top: 3.5px solid #C5A880;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5DDD2; padding-bottom: 14px; margin-bottom: 16px;">
-                <div>
-                    <h3 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.3rem;">Welcome, {cust_name}</h3>
-                    <span style="font-size: 0.88rem; font-weight: 700; color: #1A2E26;">Account ID: {cust_id} • {BANK_NAME}</span>
-                </div>
-                <div class="rbi-badge">
-                    ✓ RBI Fair Practices Verified
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">
-                <div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">
-                    <div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Current Monthly EMI</div>
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #08201A; font-family: 'Cinzel', serif;">₹{current_emi:,.2f}</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">
-                    <div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Outstanding Balance</div>
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #664614; font-family: 'Cinzel', serif;">₹{rem_principal:,.2f}</div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">
-                    <div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Remaining Tenure</div>
-                    <div style="font-size: 1.5rem; font-weight: 800; color: #0A523E; font-family: 'Cinzel', serif;">{baseline_tenure} Months</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # Container Card (Mild Glassmorphism: 70% Opaque) - ZERO leading whitespace to prevent code blocks
+    cust_card_html = (
+        f'<div class="glass-panel" style="max-width: 820px; margin: 0 auto 24px auto; border-top: 3.5px solid #C5A880;">'
+        f'<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5DDD2; padding-bottom: 14px; margin-bottom: 16px;">'
+        f'<div>'
+        f'<h3 style="margin: 0; color: #08201A; font-family: \'Cinzel\', serif; font-size: 1.3rem;">Welcome, {cust_name}</h3>'
+        f'<span style="font-size: 0.88rem; font-weight: 700; color: #1A2E26;">Account ID: {cust_id} • {BANK_NAME}</span>'
+        f'</div>'
+        f'<div class="rbi-badge">'
+        f'✓ RBI Fair Practices Verified'
+        f'</div>'
+        f'</div>'
+        f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">'
+        f'<div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">'
+        f'<div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Current Monthly EMI</div>'
+        f'<div style="font-size: 1.5rem; font-weight: 800; color: #08201A; font-family: \'Cinzel\', serif;">₹{current_emi:,.2f}</div>'
+        f'</div>'
+        f'<div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">'
+        f'<div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Outstanding Balance</div>'
+        f'<div style="font-size: 1.5rem; font-weight: 800; color: #664614; font-family: \'Cinzel\', serif;">₹{rem_principal:,.2f}</div>'
+        f'</div>'
+        f'<div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">'
+        f'<div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Remaining Tenure</div>'
+        f'<div style="font-size: 1.5rem; font-weight: 800; color: #0A523E; font-family: \'Cinzel\', serif;">{baseline_tenure} Months</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
     )
+    st.markdown(cust_card_html, unsafe_allow_html=True)
 
     # Interactive Simulator Sliders
     c_left, c_right = st.columns([1, 1])
@@ -145,36 +142,32 @@ def render_customer_view(df_portfolio: pd.DataFrame):
         pct = relief_plan["savings_pct"]
 
         # Imperial Pine Hero Relief Card
-        st.markdown(
-            f"""
-            <div class="kpi-card kpi-card-hero" style="border-radius: 16px; padding: 24px;">
-                <div style="font-size: 0.82rem; color: #F7EBD9; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 800;">
-                    RESTRUCTURED MONTHLY PAYMENT
-                </div>
-                <div style="font-size: 2.35rem; font-weight: 800; color: #FFFFFF; margin: 4px 0 10px 0; font-family: 'Cinzel', serif;">
-                    ₹{relief_plan['new_emi']:,.2f} <span style="font-size: 1.05rem; color: #C5A880; font-family: sans-serif; font-weight: 600;">/ month</span>
-                </div>
-                <div class="relief-chip">
-                    Save ₹{savings:,.2f} per month ({pct:.1f}% reduction)
-                </div>
-                <div style="margin-top: 18px; font-size: 0.90rem; color: #FFFFFF; font-weight: 500; line-height: 1.65;">
-                    • New Repayment Horizon: <strong>{relief_plan['new_tenure_months']} months</strong> (+{tenure_extension} mo extension)<br>
-                    • Concessional APR: <strong>{relief_plan['new_annual_rate']*100:.2f}%</strong> ({rate_discount_bps} bps discount applied)<br>
-                    • Emergency Grace Period: <strong>{relief_plan['moratorium_months']} months</strong> (Principal Freeze)
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        hero_card_html = (
+            f'<div class="kpi-card kpi-card-hero" style="border-radius: 16px; padding: 24px;">'
+            f'<div style="font-size: 0.82rem; color: #F7EBD9; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 800;">'
+            f'RESTRUCTURED MONTHLY PAYMENT'
+            f'</div>'
+            f'<div style="font-size: 2.35rem; font-weight: 800; color: #FFFFFF; margin: 4px 0 10px 0; font-family: \'Cinzel\', serif;">'
+            f'₹{relief_plan["new_emi"]:,.2f} <span style="font-size: 1.05rem; color: #C5A880; font-family: sans-serif; font-weight: 600;">/ month</span>'
+            f'</div>'
+            f'<div class="relief-chip">'
+            f'Save ₹{savings:,.2f} per month ({pct:.1f}% reduction)'
+            f'</div>'
+            f'<div style="margin-top: 18px; font-size: 0.90rem; color: #FFFFFF; font-weight: 500; line-height: 1.65;">'
+            f'• New Repayment Horizon: <strong>{relief_plan["new_tenure_months"]} months</strong> (+{tenure_extension} mo extension)<br>'
+            f'• Concessional APR: <strong>{relief_plan["new_annual_rate"]*100:.2f}%</strong> ({rate_discount_bps} bps discount applied)<br>'
+            f'• Emergency Grace Period: <strong>{relief_plan["moratorium_months"]} months</strong> (Principal Freeze)'
+            f'</div>'
+            f'</div>'
         )
+        st.markdown(hero_card_html, unsafe_allow_html=True)
 
     # Visual Amortization Schedule (70% Mild Glassmorphism)
     st.markdown("---")
     st.markdown(
-        """
-        <h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 14px 0; font-weight: 800;">
-            📊 Projected Repayment & Balance Trajectory
-        </h3>
-        """,
+        """<h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 14px 0; font-weight: 800;">
+📊 Projected Repayment & Balance Trajectory
+</h3>""",
         unsafe_allow_html=True,
     )
 
@@ -238,19 +231,17 @@ def render_customer_view(df_portfolio: pd.DataFrame):
     # Professional Animation & Feedback (Replaces Balloons)
     if st.button("✅ Confirm & Activate Restructured Payment Plan", disabled=not consent):
         st.toast("Restructured Repayment Terms Activated Successfully", icon="✨")
-        st.markdown(
-            f"""
-            <div class="kintsugi-success-banner">
-                <div class="kintsugi-success-icon">✓</div>
-                <div>
-                    <h4 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.15rem;">
-                        Restructured Plan Activated Successfully
-                    </h4>
-                    <p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">
-                        Congratulations <strong>{cust_name}</strong>! Your revised monthly payment of <strong>₹{relief_plan['new_emi']:,.2f}</strong> has been registered. An updated loan schedule and agreement have been dispatched to your verified contact details.
-                    </p>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        success_html = (
+            f'<div class="kintsugi-success-banner">'
+            f'<div class="kintsugi-success-icon">✓</div>'
+            f'<div>'
+            f'<h4 style="margin: 0; color: #08201A; font-family: \'Cinzel\', serif; font-size: 1.15rem;">'
+            f'Restructured Plan Activated Successfully'
+            f'</h4>'
+            f'<p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">'
+            f'Congratulations <strong>{cust_name}</strong>! Your revised monthly payment of <strong>₹{relief_plan["new_emi"]:,.2f}</strong> has been registered. An updated loan schedule and agreement have been dispatched to your verified contact details.'
+            f'</p>'
+            f'</div>'
+            f'</div>'
         )
+        st.markdown(success_html, unsafe_allow_html=True)
