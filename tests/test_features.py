@@ -106,8 +106,12 @@ def test_triage_queue_records_match_the_source_dataset():
     assert len(portfolio) == len(raw) == 2240
     assert portfolio["customer_id"].str.removeprefix("CUST-").astype(int).tolist() == raw["ID"].astype(int).tolist()
 
-    expected_monthly_income = (raw["Income"].fillna(raw["Income"].median()) / 12).round(2)
+    expected_monthly_income = (raw["Income"].fillna(raw["Income"].median())).round(2)
     assert portfolio["monthly_income"].tolist() == expected_monthly_income.tolist()
+
+    # Specific assertion for CUST-5602 as requested by user
+    cust_5602 = portfolio[portfolio["customer_id"] == "CUST-5602"].iloc[0]
+    assert cust_5602["monthly_income"] == 66973.0
 
     total_purchases = raw["NumWebPurchases"] + raw["NumStorePurchases"] + raw["NumCatalogPurchases"] + 0.001
     expected_deal_index = (raw["NumDealsPurchases"] / total_purchases).clip(0, 1).round(4)

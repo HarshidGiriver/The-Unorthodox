@@ -62,8 +62,8 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     """Map raw marketing campaign attributes to FinSafe borrower schema.
 
     Transformations:
-    - monthly_income = Income / 12 (missing income imputed with median)
-    - monthly_expenses = (MntWines + MntFruits + MntMeatProducts + MntFishProducts + MntSweetProducts + MntGoldProds) / 12
+    - monthly_income = Income (treated directly as monthly income, no division by 12)
+    - monthly_expenses = (MntWines + MntFruits + MntMeatProducts + MntFishProducts + MntSweetProducts + MntGoldProds)
     - deal_purchase_ratio = NumDealsPurchases / (NumWebPurchases + NumStorePurchases + NumCatalogPurchases + 0.001)
     - dependents = Kidhome + Teenhome
     - Synthesizes realistic baseline loan parameters:
@@ -78,10 +78,10 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     df = df_raw.copy()
 
-    # 1. Impute missing Income with median and compute monthly_income
+    # 1. Impute missing Income with median and compute monthly_income (treated directly as monthly income)
     median_income = float(df["Income"].dropna().median()) if not df["Income"].dropna().empty else 50000.0
     income = df["Income"].fillna(median_income).astype(float)
-    monthly_income = np.maximum(income / 12.0, 100.0)
+    monthly_income = np.maximum(income, 100.0)
 
     # 2. Compute monthly_expenses from Mnt purchase columns
     mnt_cols = [
@@ -95,7 +95,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     present_mnt = [c for c in mnt_cols if c in df.columns]
     if present_mnt:
         total_spent = df[present_mnt].sum(axis=1).astype(float)
-        monthly_expenses = np.maximum(total_spent / 12.0, 10.0)
+        monthly_expenses = np.maximum(total_spent, 10.0)
     else:
         monthly_expenses = monthly_income * 0.45
 
@@ -199,7 +199,12 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         "discretionary_ratio": np.round(discretionary_ratio.values, 4),
     }
 
-    return pd.DataFrame(records)
+    # Retain all original raw columns from marketing_campaign.csv
+    result_df = df_raw.copy()
+    for col, val in records.items():
+        result_df[col] = val
+
+    return result_df
 
 
 def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) -> pd.DataFrame:
