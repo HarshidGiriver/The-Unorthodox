@@ -150,7 +150,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     # 7. Savings buffers, depletion rate, credit utilization, late days
     # Distress behavior: high deal purchases (>0.40) correlates with cashflow strain
-    deal_vals = deal_purchase_ratio.values
+    deal_vals = deal_purchase_ratio.to_numpy(dtype=float, copy=True)
     is_strained = deal_vals > 0.40
 
     buffer_multiplier = np.where(
@@ -173,7 +173,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         rng.uniform(0.18, 0.52, n_samples),
     )
 
-    complain = df.get("Complain", pd.Series([0] * n_samples)).values
+    complain = df.get("Complain", pd.Series([0] * n_samples)).to_numpy(copy=True)
     late_days = np.where(
         (deal_vals > 0.50) | (complain == 1),
         rng.choice([5, 12, 18, 25, 35], n_samples),

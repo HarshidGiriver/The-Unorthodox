@@ -18,18 +18,25 @@ def render_customer_view(df_portfolio: pd.DataFrame):
     # Profile Selector for demo simulation
     col_sel, _ = st.columns([2, 2])
     with col_sel:
-        # Default to a distressed customer if available
-        distressed_ids = df_portfolio[df_portfolio["risk_tier"].str.contains("Tier 3|Tier 2", na=False)]["customer_id"].tolist()
-        default_idx = 0 if distressed_ids else 0
         customer_options = df_portfolio["customer_id"].tolist()
+        # Default to CUST-4141 benchmark account
+        default_idx = customer_options.index("CUST-4141") if "CUST-4141" in customer_options else 0
         
         selected_cust_id = st.selectbox(
             "Select Borrower Account (Demo Persona):",
             options=customer_options,
-            index=customer_options.index(distressed_ids[0]) if distressed_ids else 0,
+            index=default_idx,
         )
 
     customer = df_portfolio[df_portfolio["customer_id"] == selected_cust_id].iloc[0]
+
+    # Safely retrieve customer financial baseline
+    cust_name = customer.get("name", "Borrower")
+    cust_id = customer.get("customer_id", selected_cust_id)
+    current_emi = float(customer.get("current_emi", 14400.0))
+    rem_principal = float(customer.get("remaining_principal", 300000.0))
+    baseline_tenure = int(customer.get("remaining_tenure_months", 24))
+    annual_rate = float(customer.get("annual_interest_rate", 0.14))
 
     # Container Card
     st.markdown(
@@ -37,8 +44,8 @@ def render_customer_view(df_portfolio: pd.DataFrame):
         <div class="glass-panel" style="max-width: 800px; margin: 0 auto 24px auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 16px;">
                 <div>
-                    <h3 style="margin: 0; color: #ffffff;">Welcome, {customer['name']}</h3>
-                    <span style="font-size: 0.85rem; color: #94a3b8;">Account ID: {customer['customer_id']} • {BANK_NAME}</span>
+                    <h3 style="margin: 0; color: #ffffff;">Welcome, {cust_name}</h3>
+                    <span style="font-size: 0.85rem; color: #94a3b8;">Account ID: {cust_id} • {BANK_NAME}</span>
                 </div>
                 <div class="rbi-badge">
                     ✓ RBI Fair Practices Verified
@@ -47,15 +54,15 @@ def render_customer_view(df_portfolio: pd.DataFrame):
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center;">
                 <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px;">
                     <div style="font-size: 0.8rem; color: #94a3b8;">Current Monthly EMI</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #f8fafc;">₹{customer['current_emi']:,.2f}</div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: #f8fafc;">₹{current_emi:,.2f}</div>
                 </div>
                 <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px;">
                     <div style="font-size: 0.8rem; color: #94a3b8;">Outstanding Balance</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #818cf8;">₹{customer['remaining_principal']:,.2f}</div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: #818cf8;">₹{rem_principal:,.2f}</div>
                 </div>
                 <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px;">
                     <div style="font-size: 0.8rem; color: #94a3b8;">Remaining Tenure</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #34d399;">{int(customer['remaining_tenure_months'])} Months</div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: #34d399;">{baseline_tenure} Months</div>
                 </div>
             </div>
         </div>
@@ -68,13 +75,29 @@ def render_customer_view(df_portfolio: pd.DataFrame):
 
     with c_left:
         st.markdown("#### ⚙️ Adjust Your Relief Preferences")
-        tenure_extension = st.slider(
-            "Extend Loan Duration (Months):",
+        
+        # Smooth tenure extension slider: baseline (24) smoothly extending to 36+
+        total_tenure = st.slider(
+            "Revised Loan Duration (Months):",
+            min_value=baseline_tenure,
+            max_value=baseline_tenure + 36,
+            value=36 if baseline_tenure <= 36 else baseline_tenure + 12,
+            step=1,
+            help="Adjust loan duration. For CUST-4141, extending tenure from 24 to 36 months significantly reduces your monthly obligation.",
+        )
+        tenure_extension = total_tenure - baseline_tenure
+
+        st.caption(
+            f"ℹ️ Original Tenure: **{baseline_tenure} mos** | Extension: **+{tenure_extension} mos** | Revised Tenure: **{total_tenure} mos**"
+        )
+
+        rate_discount_bps = st.slider(
+            "Pre-Approved Rate Concession (BPS):",
             min_value=0,
-            max_value=36,
-            value=18,
-            step=6,
-            help="Extending tenure spreads out repayment, immediately lowering your required monthly payment.",
+            max_value=200,
+            value=100,
+            step=25,
+            help="Bank pre-approved interest rate concession (100 bps = 1.00% reduction, e.g., 14.0% -> 13.0%).",
         )
 
         moratorium = st.slider(
@@ -86,15 +109,13 @@ def render_customer_view(df_portfolio: pd.DataFrame):
             help="Principal freeze period allowing you to stabilize personal emergency cash flow.",
         )
 
-        rate_discount_bps = 75  # Bank pre-approved standard concession
-
         # Calculate live proposal
         solver = DebtRestructuringAgent()
         relief_plan = solver.optimize_restructuring(
-            remaining_principal=customer["remaining_principal"],
-            current_emi=customer["current_emi"],
-            current_tenure_months=int(customer["remaining_tenure_months"]),
-            annual_rate=customer["annual_interest_rate"],
+            remaining_principal=rem_principal,
+            current_emi=current_emi,
+            current_tenure_months=baseline_tenure,
+            annual_rate=annual_rate,
             tenure_extension_months=tenure_extension,
             rate_concession_bps=rate_discount_bps,
             moratorium_months=moratorium,
@@ -113,12 +134,12 @@ def render_customer_view(df_portfolio: pd.DataFrame):
                     ₹{relief_plan['new_emi']:,.2f} <span style="font-size: 1rem; color: #94a3b8;">/ month</span>
                 </div>
                 <div class="relief-chip">
-                    Save ₹{savings:,.2f} per month ({pct:.1f}% reduction)
+                    Monthly Cash Freed: ₹{savings:,.2f} / month ({pct:.1f}% reduction)
                 </div>
                 <div style="margin-top: 16px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
-                    • New Loan Tenure: <strong>{relief_plan['new_tenure_months']} months</strong><br>
-                    • Concessional APR: <strong>{relief_plan['new_annual_rate']*100:.2f}%</strong> (75 bps discount applied)<br>
-                    • Grace Period: <strong>{relief_plan['moratorium_months']} months</strong>
+                    • New Loan Tenure: <strong>{relief_plan['new_tenure_months']} months</strong> (+{tenure_extension} mo extension)<br>
+                    • Concessional APR: <strong>{relief_plan['new_annual_rate']*100:.2f}%</strong> ({rate_discount_bps} bps discount applied)<br>
+                    • Grace Period: <strong>{relief_plan['moratorium_months']} months</strong> (Principal Freeze)
                 </div>
             </div>
             """,
@@ -186,7 +207,7 @@ def render_customer_view(df_portfolio: pd.DataFrame):
     if st.button("✅ Confirm & Activate Restructured Payment Plan", disabled=not consent):
         st.balloons()
         st.success(
-            f"Congratulations {customer['name']}! Your restructured plan has been activated. "
+            f"Congratulations {cust_name}! Your restructured plan has been activated. "
             f"Your next EMI will be ₹{relief_plan['new_emi']:,.2f}. An updated agreement and schedule "
             f"have been sent to your registered email."
         )

@@ -56,9 +56,16 @@ class EmpatheticOutreachAgent:
         new_tenure = restructuring_details.get("new_tenure_months", 0)
         moratorium = restructuring_details.get("moratorium_months", 0)
 
-        # Attempt dynamic LLM generation if API key is provided
+        # Attempt dynamic LLM generation only if valid non-placeholder API key is configured
         llm_content = None
-        if self.api_key and len(self.api_key.strip()) > 10:
+        has_valid_key = (
+            self.api_key
+            and len(self.api_key.strip()) > 15
+            and not self.api_key.startswith("your-")
+            and not self.api_key.startswith("dummy")
+            and not self.api_key.startswith("placeholder")
+        )
+        if has_valid_key:
             llm_content = self._generate_with_llm(
                 customer_name=customer_name,
                 old_emi=old_emi,
@@ -214,7 +221,14 @@ class EmpatheticOutreachAgent:
                 "temperature": OPENAI_TEMPERATURE,
             }
 
-            resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=8)
+            # Guard with tight connect (1.5s) and read (2.5s) timeouts
+            # If laptop is disconnected from Wi-Fi, it fails immediately to fallback
+            resp = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=(1.5, 2.5),
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 content = data["choices"][0]["message"]["content"]
@@ -223,5 +237,6 @@ class EmpatheticOutreachAgent:
                 parsed = json.loads(content)
                 return {"email": parsed.get("email", ""), "sms": parsed.get("sms", "")}
         except Exception:
+            # Immediate deterministic offline fallback
             pass
         return None
