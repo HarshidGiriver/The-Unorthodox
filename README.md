@@ -47,6 +47,8 @@ flowchart TD
 ```
 
 ---
+Architecture design :
+<img width="4544" height="8192" alt="Borrower Financial Data-2026-09-18-100456" src="https://github.com/user-attachments/assets/84a5a2df-adc3-45c6-9212-7457000a2818" />
 
 ## 🚀 Key Modules & Capabilities
 
