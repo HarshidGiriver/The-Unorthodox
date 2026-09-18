@@ -1,0 +1,227 @@
+"""Empathetic Outreach Agent: RBI-compliant proactive borrower communication generator."""
+
+from typing import Dict, Any, Optional
+import datetime
+import requests
+
+from src.config import (
+    OPENAI_API_KEY,
+    OPENAI_MODEL_NAME,
+    OPENAI_TEMPERATURE,
+    BANK_NAME,
+    BANK_GRIEVANCE_OFFICER_NAME,
+    BANK_GRIEVANCE_OFFICER_EMAIL,
+    BANK_GRIEVANCE_OFFICER_PHONE,
+    RBI_CALL_HOURS_START,
+    RBI_CALL_HOURS_END,
+)
+
+
+class EmpatheticOutreachAgent:
+    """Agent responsible for crafting empathetic, transparent, and RBI-compliant restructuring offers."""
+
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or OPENAI_API_KEY
+
+    def is_within_rbi_contact_hours(self, current_time: Optional[datetime.time] = None) -> bool:
+        """Verify if current time falls within RBI-permitted contact hours (08:00 to 19:00)."""
+        now = current_time or datetime.datetime.now().time()
+        start = datetime.time.fromisoformat(RBI_CALL_HOURS_START)
+        end = datetime.time.fromisoformat(RBI_CALL_HOURS_END)
+        return start <= now <= end
+
+    def generate_outreach(
+        self,
+        customer_name: str,
+        customer_id: str,
+        restructuring_details: Dict[str, Any],
+        language: str = "English",
+        channel: str = "all",
+    ) -> Dict[str, Any]:
+        """Generate comprehensive, empathetic restructuring proposal outreach.
+
+        Args:
+            customer_name: Borrower full name.
+            customer_id: Borrower account identifier.
+            restructuring_details: Output from DebtRestructuringAgent.optimize_restructuring.
+            language: Desired language ("English" or "Hindi").
+            channel: Communication channel ("email", "sms", or "all").
+
+        Returns:
+            Dictionary containing email, sms, compliance disclosures, and metadata.
+        """
+        old_emi = restructuring_details.get("old_emi", 0.0)
+        new_emi = restructuring_details.get("new_emi", 0.0)
+        savings = restructuring_details.get("monthly_savings", 0.0)
+        new_tenure = restructuring_details.get("new_tenure_months", 0)
+        moratorium = restructuring_details.get("moratorium_months", 0)
+
+        # Attempt dynamic LLM generation if API key is provided
+        llm_content = None
+        if self.api_key and len(self.api_key.strip()) > 10:
+            llm_content = self._generate_with_llm(
+                customer_name=customer_name,
+                old_emi=old_emi,
+                new_emi=new_emi,
+                savings=savings,
+                new_tenure=new_tenure,
+                moratorium=moratorium,
+                language=language,
+            )
+
+        if not llm_content:
+            email_body = self._generate_template_email(
+                customer_name, customer_id, old_emi, new_emi, savings, new_tenure, moratorium, language
+            )
+            sms_body = self._generate_template_sms(
+                customer_name, old_emi, new_emi, savings, language
+            )
+        else:
+            email_body = llm_content.get("email", "")
+            sms_body = llm_content.get("sms", "")
+
+        return {
+            "customer_id": customer_id,
+            "customer_name": customer_name,
+            "language": language,
+            "is_rbi_compliant_timing": self.is_within_rbi_contact_hours(),
+            "email_subject": f"Flexible Payment Relief Options from {BANK_NAME}",
+            "email_body": email_body,
+            "sms_body": sms_body,
+            "statutory_disclosures": {
+                "bank_name": BANK_NAME,
+                "grievance_officer": BANK_GRIEVANCE_OFFICER_NAME,
+                "grievance_email": BANK_GRIEVANCE_OFFICER_EMAIL,
+                "grievance_phone": BANK_GRIEVANCE_OFFICER_PHONE,
+                "regulatory_framework": "RBI Fair Practices Code for Lenders (FPC)",
+            },
+        }
+
+    def _generate_template_email(
+        self,
+        name: str,
+        cust_id: str,
+        old_emi: float,
+        new_emi: float,
+        savings: float,
+        new_tenure: int,
+        moratorium: int,
+        language: str,
+    ) -> str:
+        """Generate structured email respecting RBI transparency guidelines."""
+        moratorium_clause = (
+            f"- Moratorium / Grace Period: {moratorium} months (no principal deduction)\n"
+            if moratorium > 0
+            else ""
+        )
+
+        if language.lower() == "hindi":
+            return (
+                f"प्रिय {name},\n\n"
+                f"{BANK_NAME} में हम आपकी निरंतर वित्तीय भलाई को सर्वोच्च प्राथमिकता देते हैं।\n"
+                f"हम समझते हैं कि जीवन में अनपेक्षित खर्च कभी-कभी नकदी प्रवाह को प्रभावित कर सकते हैं।\n"
+                f"आपके ऋण खाते ({cust_id}) को सहज बनाए रखने के लिए, हमने एक अनुकूलित राहत योजना तैयार की है:\n\n"
+                f"• वर्तमान ईएमआई: ₹{old_emi:,.2f}\n"
+                f"• प्रस्तावित नई ईएमआई: ₹{new_emi:,.2f}\n"
+                f"• मासिक बचत: ₹{savings:,.2f}\n"
+                f"• संशोधित अवधि: {new_tenure} महीने\n"
+                f"{moratorium_clause}\n"
+                f"यह एक स्वैच्छिक सहायता प्रस्ताव है। इसे स्वीकार करने के लिए आप फिनसेफ पोर्टल पर लॉगिन कर सकते हैं।\n\n"
+                f"आरबीआई निष्पक्ष आचरण संहिता के अनुसार, किसी भी प्रश्न के लिए हमारे शिकायत निवारण अधिकारी "
+                f"{BANK_GRIEVANCE_OFFICER_NAME} से {BANK_GRIEVANCE_OFFICER_PHONE} पर संपर्क करें।\n\n"
+                f"सादर,\n{BANK_NAME}"
+            )
+
+        return (
+            f"Dear {name},\n\n"
+            f"At {BANK_NAME}, your long-term financial peace of mind is our priority. We recognize that occasional "
+            f"cash flow fluctuations and unplanned expenses happen to everyone.\n\n"
+            f"To support your continued financial comfort, we have reviewed your account ({cust_id}) and pre-approved "
+            f"a proactive debt restructuring plan designed to lower your monthly outflow:\n\n"
+            f"  • Current Monthly EMI: ₹{old_emi:,.2f}\n"
+            f"  • Restructured Monthly EMI: ₹{new_emi:,.2f}\n"
+            f"  • Immediate Monthly Cash Flow Relief: ₹{savings:,.2f}\n"
+            f"  • Revised Loan Tenure: {new_tenure} months\n"
+            f"{moratorium_clause}\n"
+            f"This restructuring offer is completely voluntary and intended solely to assist you in maintaining a "
+            f"healthy credit profile without distress.\n\n"
+            f"To review full terms, transparent amortisation schedules, and activate your plan with a single click, "
+            f"please visit your FinSafe Customer Portal.\n\n"
+            f"Statutory Notice (RBI Fair Practices Code):\n"
+            f"For any queries or grievances, please reach our dedicated Grievance Redressal Officer:\n"
+            f"{BANK_GRIEVANCE_OFFICER_NAME} | Email: {BANK_GRIEVANCE_OFFICER_EMAIL} | Helpline: {BANK_GRIEVANCE_OFFICER_PHONE}\n\n"
+            f"Warm regards,\n"
+            f"Customer Care & Credit Solutions Group\n"
+            f"{BANK_NAME}"
+        )
+
+    def _generate_template_sms(
+        self,
+        name: str,
+        old_emi: float,
+        new_emi: float,
+        savings: float,
+        language: str,
+    ) -> str:
+        """Generate concise SMS notification conforming to TRAI/RBI norms."""
+        if language.lower() == "hindi":
+            return (
+                f"{BANK_NAME}: प्रिय {name}, आपके ऋण के लिए राहत योजना उपलब्ध है। "
+                f"अपनी ईएमआई को ₹{old_emi:,.0f} से घटाकर ₹{new_emi:,.0f} करें (मासिक बचत: ₹{savings:,.0f})। "
+                f"विवरण देखने व स्वीकृति हेतु फिनसेफ ऐप खोलें। हेल्पलाइन: {BANK_GRIEVANCE_OFFICER_PHONE}"
+            )
+        return (
+            f"{BANK_NAME}: Hi {name}, proactive financial relief is available for your loan. "
+            f"Reduce your EMI from ₹{old_emi:,.0f} to ₹{new_emi:,.0f} (save ₹{savings:,.0f}/month). "
+            f"Check terms & accept via the FinSafe portal. Toll-Free: {BANK_GRIEVANCE_OFFICER_PHONE}"
+        )
+
+    def _generate_with_llm(
+        self,
+        customer_name: str,
+        old_emi: float,
+        new_emi: float,
+        savings: float,
+        new_tenure: int,
+        moratorium: int,
+        language: str,
+    ) -> Optional[Dict[str, str]]:
+        """Call LLM API to generate compassionate personalized message."""
+        try:
+            prompt = (
+                f"You are a compassionate, professional banking officer at {BANK_NAME}. "
+                f"Generate an empathetic, respectful, and transparent loan restructuring communication "
+                f"in compliance with the Reserve Bank of India (RBI) Fair Practices Code.\n"
+                f"Strict guidelines:\n"
+                f"1. Tone MUST be supportive, respectful, and dignified. Never use guilt, threats, or aggressive language.\n"
+                f"2. Borrower Name: {customer_name}\n"
+                f"3. Old EMI: ₹{old_emi:,.2f}, New EMI: ₹{new_emi:,.2f}, Monthly Savings: ₹{savings:,.2f}\n"
+                f"4. New Tenure: {new_tenure} months, Moratorium: {moratorium} months\n"
+                f"5. Language: {language}\n"
+                f"Provide your response in JSON format with two keys: 'email' and 'sms'."
+            )
+
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": OPENAI_MODEL_NAME,
+                "messages": [
+                    {"role": "system", "content": "You are an empathetic financial assistant adhering to banking regulations."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": OPENAI_TEMPERATURE,
+            }
+
+            resp = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=8)
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                # Clean and parse JSON or return structured format
+                import json
+                parsed = json.loads(content)
+                return {"email": parsed.get("email", ""), "sms": parsed.get("sms", "")}
+        except Exception:
+            pass
+        return None
