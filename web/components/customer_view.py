@@ -1,4 +1,10 @@
-"""Customer View: Mobile-friendly interactive loan restructuring and relief simulator."""
+"""Customer View: Mobile-friendly interactive loan restructuring and relief simulator.
+
+Visual Identity: Kintsugi - Connect • Assess • Empower
+Aesthetic: Tranquil Washi Paper, Mild Glassmorphism (70% Opaque),
+           Imperial Pine Jade & Radiant Molten Gold.
+High Contrast & 100% English Typography.
+"""
 
 import streamlit as st
 import pandas as pd
@@ -10,16 +16,29 @@ from src.config import BANK_NAME, BANK_GRIEVANCE_OFFICER_NAME, BANK_GRIEVANCE_OF
 
 def render_customer_view(df_portfolio: pd.DataFrame):
     """Render the Borrower Relief Simulator and Self-Service Portal."""
-    st.markdown("### 📱 Customer Relief Portal & Loan Restructuring Simulator")
     st.markdown(
-        "A transparent, stress-free space designed to help you regain financial breathing room."
+        """
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+            <div>
+                <h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
+                    📱 Borrower Relief Simulator & Self-Service Portal
+                </h2>
+                <p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
+                    A transparent, stress-free space designed to help you regain financial breathing room and rebuild credit health.
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <span class="seal-badge">FAIR PRACTICES COMPLIANT</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     # Profile Selector for demo simulation
     col_sel, _ = st.columns([2, 2])
     with col_sel:
         customer_options = df_portfolio["customer_id"].tolist()
-        # Default to CUST-4141 benchmark account
         default_idx = customer_options.index("CUST-4141") if "CUST-4141" in customer_options else 0
         
         selected_cust_id = st.selectbox(
@@ -38,31 +57,31 @@ def render_customer_view(df_portfolio: pd.DataFrame):
     baseline_tenure = int(customer.get("remaining_tenure_months", 24))
     annual_rate = float(customer.get("annual_interest_rate", 0.14))
 
-    # Container Card
+    # Container Card (Mild Glassmorphism: 70% Opaque)
     st.markdown(
         f"""
-        <div class="glass-panel" style="max-width: 800px; margin: 0 auto 24px auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 16px;">
+        <div class="glass-panel" style="max-width: 820px; margin: 0 auto 24px auto; border-top: 3.5px solid #C5A880;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5DDD2; padding-bottom: 14px; margin-bottom: 16px;">
                 <div>
-                    <h3 style="margin: 0; color: #ffffff;">Welcome, {cust_name}</h3>
-                    <span style="font-size: 0.85rem; color: #94a3b8;">Account ID: {cust_id} • {BANK_NAME}</span>
+                    <h3 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.3rem;">Welcome, {cust_name}</h3>
+                    <span style="font-size: 0.88rem; font-weight: 700; color: #1A2E26;">Account ID: {cust_id} • {BANK_NAME}</span>
                 </div>
                 <div class="rbi-badge">
                     ✓ RBI Fair Practices Verified
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center;">
-                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px;">
-                    <div style="font-size: 0.8rem; color: #94a3b8;">Current Monthly EMI</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #f8fafc;">₹{current_emi:,.2f}</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">
+                <div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">
+                    <div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Current Monthly EMI</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #08201A; font-family: 'Cinzel', serif;">₹{current_emi:,.2f}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px;">
-                    <div style="font-size: 0.8rem; color: #94a3b8;">Outstanding Balance</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #818cf8;">₹{rem_principal:,.2f}</div>
+                <div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">
+                    <div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Outstanding Balance</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #664614; font-family: 'Cinzel', serif;">₹{rem_principal:,.2f}</div>
                 </div>
-                <div style="background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px;">
-                    <div style="font-size: 0.8rem; color: #94a3b8;">Remaining Tenure</div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: #34d399;">{baseline_tenure} Months</div>
+                <div style="background: rgba(255, 255, 255, 0.70); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 14px; border-radius: 10px; border: 1px solid #E5DDD2;">
+                    <div style="font-size: 0.80rem; color: #2D4239; text-transform: uppercase; font-weight: 800;">Remaining Tenure</div>
+                    <div style="font-size: 1.5rem; font-weight: 800; color: #0A523E; font-family: 'Cinzel', serif;">{baseline_tenure} Months</div>
                 </div>
             </div>
         </div>
@@ -74,21 +93,20 @@ def render_customer_view(df_portfolio: pd.DataFrame):
     c_left, c_right = st.columns([1, 1])
 
     with c_left:
-        st.markdown("#### ⚙️ Adjust Your Relief Preferences")
+        st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>⚙️ Adjust Your Relief Preferences</h4>", unsafe_allow_html=True)
         
-        # Smooth tenure extension slider: baseline (24) smoothly extending to 36+
         total_tenure = st.slider(
             "Revised Loan Duration (Months):",
             min_value=baseline_tenure,
             max_value=baseline_tenure + 36,
             value=36 if baseline_tenure <= 36 else baseline_tenure + 12,
             step=1,
-            help="Adjust loan duration. For CUST-4141, extending tenure from 24 to 36 months significantly reduces your monthly obligation.",
+            help="Adjust loan duration. Extending tenure spreads out repayment, immediately lowering your required monthly payment.",
         )
         tenure_extension = total_tenure - baseline_tenure
 
         st.caption(
-            f"ℹ️ Original Tenure: **{baseline_tenure} mos** | Extension: **+{tenure_extension} mos** | Revised Tenure: **{total_tenure} mos**"
+            f"ℹ️ Original: **{baseline_tenure} mos** | Extension: **+{tenure_extension} mos** | Revised Tenure: **{total_tenure} mos**"
         )
 
         rate_discount_bps = st.slider(
@@ -97,7 +115,7 @@ def render_customer_view(df_portfolio: pd.DataFrame):
             max_value=200,
             value=100,
             step=25,
-            help="Bank pre-approved interest rate concession (100 bps = 1.00% reduction, e.g., 14.0% -> 13.0%).",
+            help="Bank pre-approved interest rate concession (100 bps = 1.00% reduction).",
         )
 
         moratorium = st.slider(
@@ -122,33 +140,43 @@ def render_customer_view(df_portfolio: pd.DataFrame):
         )
 
     with c_right:
-        st.markdown("#### 💡 Your Immediate Relief Summary")
+        st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>💡 Your Immediate Relief Summary</h4>", unsafe_allow_html=True)
         savings = relief_plan["monthly_savings"]
         pct = relief_plan["savings_pct"]
 
+        # Imperial Pine Hero Relief Card
         st.markdown(
             f"""
-            <div class="glass-panel" style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%); border: 1px solid rgba(16, 185, 129, 0.3);">
-                <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;">RESTRUCTURED MONTHLY PAYMENT</div>
-                <div style="font-size: 2.2rem; font-weight: 700; color: #34d399; margin-bottom: 8px;">
-                    ₹{relief_plan['new_emi']:,.2f} <span style="font-size: 1rem; color: #94a3b8;">/ month</span>
+            <div class="kpi-card kpi-card-hero" style="border-radius: 16px; padding: 24px;">
+                <div style="font-size: 0.82rem; color: #F7EBD9; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 800;">
+                    RESTRUCTURED MONTHLY PAYMENT
+                </div>
+                <div style="font-size: 2.35rem; font-weight: 800; color: #FFFFFF; margin: 4px 0 10px 0; font-family: 'Cinzel', serif;">
+                    ₹{relief_plan['new_emi']:,.2f} <span style="font-size: 1.05rem; color: #C5A880; font-family: sans-serif; font-weight: 600;">/ month</span>
                 </div>
                 <div class="relief-chip">
-                    Monthly Cash Freed: ₹{savings:,.2f} / month ({pct:.1f}% reduction)
+                    Save ₹{savings:,.2f} per month ({pct:.1f}% reduction)
                 </div>
-                <div style="margin-top: 16px; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
-                    • New Loan Tenure: <strong>{relief_plan['new_tenure_months']} months</strong> (+{tenure_extension} mo extension)<br>
+                <div style="margin-top: 18px; font-size: 0.90rem; color: #FFFFFF; font-weight: 500; line-height: 1.65;">
+                    • New Repayment Horizon: <strong>{relief_plan['new_tenure_months']} months</strong> (+{tenure_extension} mo extension)<br>
                     • Concessional APR: <strong>{relief_plan['new_annual_rate']*100:.2f}%</strong> ({rate_discount_bps} bps discount applied)<br>
-                    • Grace Period: <strong>{relief_plan['moratorium_months']} months</strong> (Principal Freeze)
+                    • Emergency Grace Period: <strong>{relief_plan['moratorium_months']} months</strong> (Principal Freeze)
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    # Visual Amortization Schedule
+    # Visual Amortization Schedule (70% Mild Glassmorphism)
     st.markdown("---")
-    st.subheader("📊 Projected Repayment & Balance Trajectory")
+    st.markdown(
+        """
+        <h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 14px 0; font-weight: 800;">
+            📊 Projected Repayment & Balance Trajectory
+        </h3>
+        """,
+        unsafe_allow_html=True,
+    )
 
     sched = relief_plan["amortization_schedule"]
     fig = go.Figure()
@@ -158,9 +186,9 @@ def render_customer_view(df_portfolio: pd.DataFrame):
             y=sched["ending_balance"],
             mode="lines",
             name="Remaining Principal Balance",
-            line=dict(color="#6366f1", width=3),
+            line=dict(color="#0A2B24", width=3.2),
             fill="tozeroy",
-            fillcolor="rgba(99, 102, 241, 0.1)",
+            fillcolor="rgba(197, 168, 128, 0.18)",
         )
     )
     fig.add_trace(
@@ -168,7 +196,7 @@ def render_customer_view(df_portfolio: pd.DataFrame):
             x=sched["month"],
             y=sched["principal_paid"],
             name="Principal Component",
-            marker_color="#10b981",
+            marker_color="#0A523E",
         )
     )
     fig.add_trace(
@@ -176,16 +204,19 @@ def render_customer_view(df_portfolio: pd.DataFrame):
             x=sched["month"],
             y=sched["interest_paid"],
             name="Interest Component",
-            marker_color="#f59e0b",
+            marker_color="#C5A880",
         )
     )
     fig.update_layout(
-        template="plotly_dark",
+        paper_bgcolor="rgba(255, 255, 255, 0.70)",
+        plot_bgcolor="rgba(255, 255, 255, 0.70)",
+        font=dict(family="Plus Jakarta Sans", color="#08201A", size=12),
+        title_font=dict(family="Cinzel", size=15, color="#08201A"),
         barmode="stack",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
         xaxis_title="Month",
         yaxis_title="Amount (₹)",
+        xaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880"),
+        yaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880"),
         margin=dict(t=30, b=20, l=20, r=20),
         legend=dict(orientation="h", yanchor="bottom", y=-0.25),
     )
@@ -193,7 +224,7 @@ def render_customer_view(df_portfolio: pd.DataFrame):
 
     # Transparent Statutory Acceptance
     st.markdown("---")
-    st.markdown("#### 📜 Statutory Terms & Single-Click Acceptance")
+    st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>📜 Statutory Terms & Single-Click Acceptance</h4>", unsafe_allow_html=True)
     st.info(
         f"**Statutory Disclosure under RBI Fair Practices Code for Lenders (FPC):**\n\n"
         f"1. This restructuring offer is entirely voluntary and is extended to assist you during temporary cash flow tightness.\n"
@@ -204,10 +235,22 @@ def render_customer_view(df_portfolio: pd.DataFrame):
 
     consent = st.checkbox("I have reviewed the restructured schedule and agree to the revised repayment terms.")
 
+    # Professional Animation & Feedback (Replaces Balloons)
     if st.button("✅ Confirm & Activate Restructured Payment Plan", disabled=not consent):
-        st.balloons()
-        st.success(
-            f"Congratulations {cust_name}! Your restructured plan has been activated. "
-            f"Your next EMI will be ₹{relief_plan['new_emi']:,.2f}. An updated agreement and schedule "
-            f"have been sent to your registered email."
+        st.toast("Restructured Repayment Terms Activated Successfully", icon="✨")
+        st.markdown(
+            f"""
+            <div class="kintsugi-success-banner">
+                <div class="kintsugi-success-icon">✓</div>
+                <div>
+                    <h4 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.15rem;">
+                        Restructured Plan Activated Successfully
+                    </h4>
+                    <p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">
+                        Congratulations <strong>{cust_name}</strong>! Your revised monthly payment of <strong>₹{relief_plan['new_emi']:,.2f}</strong> has been registered. An updated loan schedule and agreement have been dispatched to your verified contact details.
+                    </p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )

@@ -1,12 +1,16 @@
-"""Bank Underwriter View: Portfolio risk management, triage queue, and restructuring approval."""
+"""Bank Underwriter View: Portfolio risk management, triage queue, and restructuring approval.
+
+Visual Identity: Kintsugi - Connect • Assess • Empower
+Aesthetic: Tranquil Washi Paper, Mild Glassmorphism (70% Opaque),
+           Imperial Pine Jade & Radiant Molten Gold.
+High Contrast & 100% English Typography.
+"""
 
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from pathlib import Path
 
-from src.config import BASE_DIR
 from src.utils.metrics import calculate_portfolio_kpis
 from src.agents.restructuring_agent import DebtRestructuringAgent
 from src.agents.outreach_agent import EmpatheticOutreachAgent
@@ -14,15 +18,28 @@ from src.agents.outreach_agent import EmpatheticOutreachAgent
 
 def render_bank_view(df_portfolio: pd.DataFrame):
     """Render the Underwriter Command Center and Risk Triage Queue."""
-    st.markdown("### 🏦 Portfolio Risk Triage & Underwriter Command Center")
     st.markdown(
-        "Real-time unsupervised stress detection, non-linear early distress clustering, "
-        "and automated restructuring queue."
+        """
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+            <div>
+                <h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
+                    🏦 Portfolio Risk Triage & Command Center
+                </h2>
+                <p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
+                    Real-time unsupervised stress detection, non-linear early distress clustering, and automated restructuring queue.
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <span class="seal-badge">AUDIT VERIFIED</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     kpis = calculate_portfolio_kpis(df_portfolio)
 
-    # 1. Executive Metric Cards
+    # 1. Executive Metric Cards (Mild Glassmorphism with Imperial Pine Hero Card)
     m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
         st.markdown(
@@ -30,18 +47,21 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             <div class="kpi-card">
                 <div class="kpi-label">Active Portfolio</div>
                 <div class="kpi-value">{kpis.get('total_accounts', 0):,}</div>
-                <div class="kpi-subtext">Borrower Accounts</div>
+                <div class="kpi-subtext">Borrower Accounts Monitored</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
     with m2:
+        # Imperial Pine Hero Card
         st.markdown(
             f"""
-            <div class="kpi-card">
+            <div class="kpi-card kpi-card-hero">
                 <div class="kpi-label">Total Outstanding</div>
                 <div class="kpi-value">₹{kpis.get('total_principal_outstanding', 0)/1e7:.2f} Cr</div>
-                <div class="kpi-subtext">Principal Book Value</div>
+                <div class="kpi-subtext">
+                    <span style="color: #F7EBD9; font-weight: 700;">↑ 100% Monitored</span> • Active Book
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -51,8 +71,8 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Stress Anomaly Rate</div>
-                <div class="kpi-value" style="color: #fb7185;">{kpis.get('anomaly_prevalence_pct', 0):.1f}%</div>
-                <div class="kpi-subtext">{kpis.get('anomaly_count', 0)} High Stress Accounts</div>
+                <div class="kpi-value" style="color: #961515;">{kpis.get('anomaly_prevalence_pct', 0):.1f}%</div>
+                <div class="kpi-subtext">{kpis.get('anomaly_count', 0)} High Distress Accounts</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -62,7 +82,7 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Portfolio at Risk (30+)</div>
-                <div class="kpi-value" style="color: #fbbf24;">₹{kpis.get('par_30_exposure', 0)/1e5:.1f} L</div>
+                <div class="kpi-value" style="color: #7A530A;">₹{kpis.get('par_30_exposure', 0)/1e5:.1f} L</div>
                 <div class="kpi-subtext">{kpis.get('par_30_pct', 0):.1f}% of Active Book</div>
             </div>
             """,
@@ -73,16 +93,16 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Projected NPA Avoided</div>
-                <div class="kpi-value" style="color: #34d399;">₹{kpis.get('projected_npa_avoided', 0)/1e5:.1f} L</div>
+                <div class="kpi-value" style="color: #0A523E;">₹{kpis.get('projected_npa_avoided', 0)/1e5:.1f} L</div>
                 <div class="kpi-subtext">Via Proactive Relief (~68% cure)</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
 
-    # 2. Visual Risk Distribution Charts & Static Diagnostic Expander
+    # 2. Visual Risk Distribution Charts (Mild Glassmorphic Card Styling: 70% Opaque)
     c1, c2 = st.columns([1, 1])
     with c1:
         tier_counts = df_portfolio["risk_tier"].value_counts().reset_index()
@@ -91,20 +111,21 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             tier_counts,
             values="Accounts",
             names="Risk Tier",
-            title="Portfolio Risk Stratification",
+            title="Portfolio Risk Stratification (Kintsugi Tripartite)",
             hole=0.55,
             color="Risk Tier",
             color_discrete_map={
-                "Tier 1 (Normal / Low Risk)": "#10b981",
-                "Tier 2 (Moderate Stress)": "#f59e0b",
-                "Tier 3 (High Anomaly / Severe Distress)": "#f43f5e",
+                "Tier 1 (Normal / Low Risk)": "#0A4D3C",           # Pine Jade
+                "Tier 2 (Moderate Stress)": "#C5A880",            # Kintsugi Gold
+                "Tier 3 (High Anomaly / Severe Distress)": "#961515", # Alert Crimson
             },
         )
         fig_pie.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=40, b=20, l=20, r=20),
+            paper_bgcolor="rgba(255, 255, 255, 0.70)",
+            plot_bgcolor="rgba(255, 255, 255, 0.70)",
+            font=dict(family="Plus Jakarta Sans", color="#08201A", size=12),
+            title_font=dict(family="Cinzel", size=15, color="#08201A"),
+            margin=dict(t=45, b=25, l=25, r=25),
             legend=dict(orientation="h", yanchor="bottom", y=-0.2),
         )
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -119,54 +140,40 @@ def render_bank_view(df_portfolio: pd.DataFrame):
             hover_data=["customer_id", "name", "anomaly_score"],
             title="Spend vs. EMI Burden Matrix (Size = Loan Principal)",
             color_discrete_map={
-                "Tier 1 (Normal / Low Risk)": "#10b981",
-                "Tier 2 (Moderate Stress)": "#f59e0b",
-                "Tier 3 (High Anomaly / Severe Distress)": "#f43f5e",
+                "Tier 1 (Normal / Low Risk)": "#0A4D3C",           # Pine Jade
+                "Tier 2 (Moderate Stress)": "#C5A880",            # Kintsugi Gold
+                "Tier 3 (High Anomaly / Severe Distress)": "#961515", # Alert Crimson
             },
         )
-        fig_scatter.add_vline(x=0.7, line_dash="dash", line_color="#94a3b8", opacity=0.6)
-        fig_scatter.add_hline(y=0.45, line_dash="dash", line_color="#94a3b8", opacity=0.6)
+        fig_scatter.add_vline(x=0.7, line_dash="dash", line_color="#C5A880", opacity=0.85)
+        fig_scatter.add_hline(y=0.45, line_dash="dash", line_color="#C5A880", opacity=0.85)
         fig_scatter.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=40, b=20, l=20, r=20),
+            paper_bgcolor="rgba(255, 255, 255, 0.70)",
+            plot_bgcolor="rgba(255, 255, 255, 0.70)",
+            font=dict(family="Plus Jakarta Sans", color="#08201A", size=12),
+            title_font=dict(family="Cinzel", size=15, color="#08201A"),
+            margin=dict(t=45, b=25, l=25, r=25),
             xaxis_title="Monthly Spend / Income Ratio",
             yaxis_title="Monthly EMI / Income Ratio",
+            xaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880"),
+            yaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880"),
             legend=dict(orientation="h", yanchor="bottom", y=-0.2),
         )
         st.plotly_chart(fig_scatter, use_container_width=True)
 
-    # Dedicated Expandable Section: Static Diagnostics & Isolation Forest Verification
-    distress_dist_img = BASE_DIR / "assets" / "distress_distribution.png"
-    deal_spend_img = BASE_DIR / "assets" / "deal_vs_spend_scatter.png"
-    risk_drivers_img = BASE_DIR / "assets" / "risk_drivers_comparison.png"
-
-    with st.expander("📊 Portfolio Behavioral Diagnostics & Isolation Forest Verification", expanded=True):
-        st.markdown(
-            "Empirical offline diagnostics validating unsupervised anomaly clustering, non-linear spend compression, "
-            "and primary distress drivers across all 2,240 portfolio accounts."
-        )
-        ch1, ch2, ch3 = st.columns(3)
-        with ch1:
-            st.markdown("##### 1. Anomaly Stratification")
-            if distress_dist_img.exists():
-                st.image(str(distress_dist_img), use_container_width=True)
-            st.caption("Distribution of 2,240 accounts showing long-tail Tier 3 distressed anomaly density.")
-        with ch2:
-            st.markdown("##### 2. Deal Reliance vs. Spend")
-            if deal_spend_img.exists():
-                st.image(str(deal_spend_img), use_container_width=True)
-            st.caption("Non-linear clustering separating normal spending from emergency coupon hunting.")
-        with ch3:
-            st.markdown("##### 3. Risk Drivers Attribution")
-            if risk_drivers_img.exists():
-                st.image(str(risk_drivers_img), use_container_width=True)
-            st.caption("Feature attribution highlighting deal reliance (+151.4%) and liquidity collapse.")
-
     # 3. Triage Queue & Filterable Table
     st.markdown("---")
-    st.subheader("📋 Underwriter Triage Queue")
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0; font-weight: 800;">
+                📋 Underwriter Triage Queue
+            </h3>
+            <span style="font-size: 0.85rem; font-weight: 700; color: #12211C;">Ranked by Unsupervised Stress Anomaly Score</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     f1, f2, f3 = st.columns([2, 2, 3])
     with f1:
@@ -191,14 +198,6 @@ def render_bank_view(df_portfolio: pd.DataFrame):
         )
         filtered_df = filtered_df[mask]
 
-    # Ensure CUST-4141 is featured prominently at the top of the triage table
-    if "customer_id" in filtered_df.columns and "CUST-4141" in filtered_df["customer_id"].values:
-        cust_4141_row = filtered_df[filtered_df["customer_id"] == "CUST-4141"]
-        other_rows = filtered_df[filtered_df["customer_id"] != "CUST-4141"].sort_values(by="anomaly_score", ascending=False)
-        filtered_df = pd.concat([cust_4141_row, other_rows], ignore_index=True)
-    else:
-        filtered_df = filtered_df.sort_values(by="anomaly_score", ascending=False)
-
     # Display clean table
     display_cols = [
         "customer_id",
@@ -212,11 +211,6 @@ def render_bank_view(df_portfolio: pd.DataFrame):
         "risk_tier",
         "primary_drivers",
     ]
-    # Ensure all display columns exist safely
-    for col in display_cols:
-        if col not in filtered_df.columns:
-            filtered_df[col] = 0.0
-
     st.dataframe(
         filtered_df[display_cols].rename(
             columns={
@@ -238,7 +232,14 @@ def render_bank_view(df_portfolio: pd.DataFrame):
 
     # 4. Deep Dive & Restructuring Action Center
     st.markdown("---")
-    st.subheader("⚡ Case Review & Restructuring Action Center")
+    st.markdown(
+        """
+        <h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 16px 0; font-weight: 800;">
+            ⚡ Case Review & Restructuring Action Center
+        </h3>
+        """,
+        unsafe_allow_html=True,
+    )
 
     triage_options = filtered_df["customer_id"].tolist() if not filtered_df.empty else []
     default_select_idx = triage_options.index("CUST-4141") if "CUST-4141" in triage_options else 0
@@ -252,7 +253,7 @@ def render_bank_view(df_portfolio: pd.DataFrame):
     if selected_id:
         cust_record = df_portfolio[df_portfolio["customer_id"] == selected_id].iloc[0]
         
-        # Safely extract metrics with comprehensive fallbacks to prevent any KeyError
+        # Safely extract metrics with comprehensive fallbacks
         cust_name = cust_record.get("name", "Borrower")
         cust_id = cust_record.get("customer_id", selected_id)
         cust_phone = cust_record.get("phone", "+91-9800000000")
@@ -270,7 +271,7 @@ def render_bank_view(df_portfolio: pd.DataFrame):
         drivers = cust_record.get("primary_drivers", "Severe Outflow Burden, Deal Surge, Liquidity Depletion")
         tier_label = cust_record.get("risk_tier", "Tier 3 (High Anomaly / Severe Distress)")
 
-        # Compute benchmark behavioral metrics
+        # Benchmark behavioral metrics
         deal_surge_pct = ((deal_idx - 0.1973) / 0.1973 * 100) if deal_idx > 0.1973 else 0.0
         disc_compression_pct = disc_ratio * 100.0
 
@@ -279,47 +280,45 @@ def render_bank_view(df_portfolio: pd.DataFrame):
         with c_info:
             st.markdown(
                 f"""
-                <div class="glass-panel">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div class="glass-panel" style="border-top: 3.5px solid #C5A880;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                         <div>
-                            <h4 style="margin:0;">{cust_name} <span style="font-size:0.85rem; color:#94a3b8;">({cust_id})</span></h4>
-                            <span style="font-size:0.8rem; color:#64748b;">Phone: {cust_phone}</span>
+                            <h4 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.25rem;">{cust_name}</h4>
+                            <span style="font-size: 0.84rem; color: #664614; font-weight: 700;">ID: {cust_id} • Phone: {cust_phone}</span>
                         </div>
                         <span class="badge-tier-3">{tier_label}</span>
                     </div>
 
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
-                        <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.28); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.72rem; color: #fb7185; text-transform: uppercase; font-weight:600;">Deal Reliance</div>
-                            <div style="font-size: 1.15rem; font-weight: 700; color: #ffffff;">+{deal_surge_pct:.1f}%</div>
-                            <div style="font-size: 0.68rem; color: #94a3b8;">Emergency Deal Surge</div>
+                        <div style="background: rgba(158, 28, 28, 0.12); border: 1px solid rgba(158, 28, 28, 0.35); border-radius: 10px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #961515; text-transform: uppercase; font-weight: 800;">Deal Surge</div>
+                            <div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">+{deal_surge_pct:.1f}%</div>
+                            <div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Coupon Reliance</div>
                         </div>
-                        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.28); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.72rem; color: #fbbf24; text-transform: uppercase; font-weight:600;">Discretionary Spend</div>
-                            <div style="font-size: 1.15rem; font-weight: 700; color: #ffffff;">{disc_compression_pct:.0f}%</div>
-                            <div style="font-size: 0.68rem; color: #94a3b8;">Spend Compression</div>
+                        <div style="background: rgba(197, 168, 128, 0.18); border: 1px solid rgba(197, 168, 128, 0.45); border-radius: 10px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #7A530A; text-transform: uppercase; font-weight: 800;">Discretionary</div>
+                            <div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">{disc_compression_pct:.0f}%</div>
+                            <div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Spend Share</div>
                         </div>
-                        <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.28); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.72rem; color: #818cf8; text-transform: uppercase; font-weight:600;">Liquidity Buffer</div>
-                            <div style="font-size: 1.15rem; font-weight: 700; color: #ffffff;">{runway_mo:.2f} Mo</div>
-                            <div style="font-size: 0.68rem; color: #94a3b8;">Reserve Cash Runway</div>
+                        <div style="background: rgba(10, 82, 62, 0.12); border: 1px solid rgba(10, 82, 62, 0.35); border-radius: 10px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.72rem; color: #0A523E; text-transform: uppercase; font-weight: 800;">Liquid Runway</div>
+                            <div style="font-size: 1.15rem; font-weight: 800; color: #08201A;">{runway_mo:.2f} Mo</div>
+                            <div style="font-size: 0.70rem; color: #2C4037; font-weight: 600;">Cash Buffer</div>
                         </div>
                     </div>
 
-                    <div style="font-size: 0.85rem; line-height: 1.7; color: #cbd5e1;">
-                        <p style="margin:4px 0;"><strong>Monthly Income:</strong> ₹{monthly_inc:,.2f} | <strong>Current EMI:</strong> ₹{curr_emi:,.2f}</p>
-                        <p style="margin:4px 0;"><strong>Remaining Principal:</strong> ₹{rem_principal:,.2f} @ {apr_rate*100:.1f}% APR ({rem_tenure} mos)</p>
-                        <p style="margin:4px 0;"><strong>Liquid Savings:</strong> ₹{savings_bal:,.2f} | <strong>Credit Utilization:</strong> {credit_util*100:.1f}%</p>
-                        <p style="margin:4px 0;"><strong>Payment Friction:</strong> {late_days} late days in last 6 months</p>
-                        <p style="margin:4px 0;"><strong>Primary Risk Drivers:</strong> <span style="color:#fb7185;">{drivers}</span></p>
-                    </div>
+                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Monthly Income:</strong> ₹{monthly_inc:,.2f} | <strong>Current EMI:</strong> ₹{curr_emi:,.2f}</p>
+                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Remaining Principal:</strong> ₹{rem_principal:,.2f} @ {apr_rate*100:.1f}% APR ({rem_tenure} mos)</p>
+                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Liquid Savings:</strong> ₹{savings_bal:,.2f} | <strong>Credit Utilization:</strong> {credit_util*100:.1f}%</p>
+                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Payment Friction:</strong> {late_days} late days in last 6 months</p>
+                    <p style="font-size: 0.92rem; margin: 6px 0; color: #12211C;"><strong>Primary Drivers:</strong> <span style="color: #961515; font-weight: 700;">{drivers}</span></p>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
         with c_action:
-            st.markdown("##### 🛠️ Restructuring Parameters")
+            st.markdown("<h5 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>🛠️ Restructuring Parameters</h5>", unsafe_allow_html=True)
             col_ext, col_rate, col_mor = st.columns(3)
             with col_ext:
                 tenure_ext = st.slider("Tenure Extension (Months)", 0, 36, 12, 6)
@@ -356,7 +355,7 @@ def render_bank_view(df_portfolio: pd.DataFrame):
                 language=lang,
             )
 
-            with st.expander("📬 Preview Empathetic Outreach Message (RBI Compliant)"):
+            with st.expander("📬 Preview Empathetic Outreach Notice (RBI Compliant)"):
                 st.markdown(f"**Email Subject:** {outreach['email_subject']}")
                 st.text_area("Email Content", outreach["email_body"], height=160)
                 st.text_area("SMS Preview", outreach["sms_body"], height=70)
@@ -364,8 +363,22 @@ def render_bank_view(df_portfolio: pd.DataFrame):
                     f"Timing Compliance: {'Permissible (08:00 - 19:00)' if outreach['is_rbi_compliant_timing'] else 'Queue for 08:00 AM dispatch'}"
                 )
 
+            # Professional Animation & Feedback (Replaces Balloons)
             if st.button("🚀 Approve Restructuring & Dispatch Proactive Offer"):
-                st.balloons()
-                st.success(
-                    f"Restructuring approved for {cust_name}! Proposal logged and empathetic notification dispatched."
+                st.toast(f"Restructuring Plan Registered for {cust_name}", icon="✨")
+                st.markdown(
+                    f"""
+                    <div class="kintsugi-success-banner">
+                        <div class="kintsugi-success-icon">✓</div>
+                        <div>
+                            <h4 style="margin: 0; color: #08201A; font-family: 'Cinzel', serif; font-size: 1.1rem;">
+                                Restructuring Approved & Active
+                            </h4>
+                            <p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">
+                                Proposal registered and empathetic notification dispatched to <strong>{cust_name}</strong> ({cust_id}). Ledger updated.
+                            </p>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
