@@ -55,9 +55,9 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# FinSafe Data Exclusions (keep .gitkeep and sample data)
+# FinSafe Data Exclusions (keep .gitkeep and marketing_campaign dataset)
 data/raw/*.csv
-!data/raw/customers_sample.csv
+!data/raw/marketing_campaign.csv
 !data/raw/.gitkeep
 data/processed/*.csv
 !data/processed/.gitkeep

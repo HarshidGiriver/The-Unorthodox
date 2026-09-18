@@ -4,7 +4,7 @@ from typing import Tuple, List, Optional
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from src.config import RAW_DATA_DIR
+from src.config import RAW_DATA_DIR, BASE_DIR
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -34,6 +34,163 @@ def validate_schema(df: pd.DataFrame) -> Tuple[bool, List[str]]:
     """
     missing = [col for col in REQUIRED_COLUMNS if col not in df.columns]
     return len(missing) == 0, missing
+
+
+def load_raw_delimited_csv(file_path: Path) -> pd.DataFrame:
+    """Load CSV with automatic delimiter detection (supporting tab, semicolon, comma).
+
+    Args:
+        file_path: Path to CSV file.
+
+    Returns:
+        Loaded raw DataFrame.
+    """
+    delimiters = ["\t", ";", ","]
+    for sep in delimiters:
+        try:
+            df = pd.read_csv(file_path, sep=sep)
+            if len(df.columns) > 5 and ("Income" in df.columns or "customer_id" in df.columns):
+                return df
+        except Exception:
+            continue
+
+    # Fallback to python sniffer engine
+    return pd.read_csv(file_path, sep=None, engine="python")
+
+
+def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """Map raw marketing campaign attributes to FinSafe borrower schema.
+
+    Transformations:
+    - monthly_income = Income / 12 (missing income imputed with median)
+    - monthly_expenses = (MntWines + MntFruits + MntMeatProducts + MntFishProducts + MntSweetProducts + MntGoldProds) / 12
+    - deal_purchase_ratio = NumDealsPurchases / (NumWebPurchases + NumStorePurchases + NumCatalogPurchases + 0.001)
+    - dependents = Kidhome + Teenhome
+    - Synthesizes realistic baseline loan parameters:
+      remaining_principal = 300,000, current_emi = 14,400, remaining_tenure_months = 24, annual_interest_rate = 0.14
+    - Calibrates liquid buffers, credit utilization, and borrower identities.
+
+    Args:
+        df_raw: Raw DataFrame from marketing_campaign.csv.
+
+    Returns:
+        Standardized DataFrame adhering to REQUIRED_COLUMNS.
+    """
+    df = df_raw.copy()
+
+    # 1. Impute missing Income with median and compute monthly_income
+    median_income = float(df["Income"].dropna().median()) if not df["Income"].dropna().empty else 50000.0
+    income = df["Income"].fillna(median_income).astype(float)
+    monthly_income = np.maximum(income / 12.0, 100.0)
+
+    # 2. Compute monthly_expenses from Mnt purchase columns
+    mnt_cols = [
+        "MntWines",
+        "MntFruits",
+        "MntMeatProducts",
+        "MntFishProducts",
+        "MntSweetProducts",
+        "MntGoldProds",
+    ]
+    present_mnt = [c for c in mnt_cols if c in df.columns]
+    if present_mnt:
+        total_spent = df[present_mnt].sum(axis=1).astype(float)
+        monthly_expenses = np.maximum(total_spent / 12.0, 10.0)
+    else:
+        monthly_expenses = monthly_income * 0.45
+
+    # 3. Compute deal_purchase_ratio
+    deals = df.get("NumDealsPurchases", 0).astype(float)
+    web = df.get("NumWebPurchases", 0).astype(float)
+    store = df.get("NumStorePurchases", 0).astype(float)
+    catalog = df.get("NumCatalogPurchases", 0).astype(float)
+    total_purchases = web + store + catalog + 0.001
+    deal_purchase_ratio = np.clip(deals / total_purchases, 0.0, 1.0)
+
+    # 4. Dependents
+    kids = df.get("Kidhome", 0).astype(int)
+    teens = df.get("Teenhome", 0).astype(int)
+    dependents = kids + teens
+
+    # 5. Baseline loan parameters (300k principal, 14.4k EMI, 24 mos tenure, 14% APR)
+    remaining_principal = 300000.0
+    current_emi = 14400.0
+    remaining_tenure = 24
+    annual_rate = 0.14
+
+    # 6. Borrower identities
+    first_names = [
+        "Aarav", "Priya", "Rohan", "Ananya", "Vikram", "Neha", "Rahul", "Kavita",
+        "Siddharth", "Pooja", "Arjun", "Deepika", "Karan", "Sneha", "Aditya", "Meera",
+        "Rajesh", "Sunita", "Amit", "Swati", "Suresh", "Divya", "Gaurav", "Shreya"
+    ]
+    last_names = [
+        "Sharma", "Verma", "Patel", "Mehta", "Iyer", "Nair", "Reddy", "Rao",
+        "Mukherjee", "Chatterjee", "Gupta", "Malhotra", "Kapoor", "Bhat", "Deshmukh", "Singh"
+    ]
+
+    n_samples = len(df)
+    rng = np.random.RandomState(42)
+
+    ids = df.get("ID", pd.Series(range(1, n_samples + 1))).astype(int).values
+    cust_ids = [f"CUST-{val:04d}" for val in ids]
+    names = [
+        f"{first_names[val % len(first_names)]} {last_names[(val // len(first_names)) % len(last_names)]}"
+        for val in ids
+    ]
+    phones = [f"+91-98{val % 90000000 + 10000000}" for val in ids]
+
+    # 7. Savings buffers, depletion rate, credit utilization, late days
+    # Distress behavior: high deal purchases (>0.40) correlates with cashflow strain
+    deal_vals = deal_purchase_ratio.values
+    is_strained = deal_vals > 0.40
+
+    buffer_multiplier = np.where(
+        is_strained,
+        rng.uniform(0.15, 0.85, n_samples),
+        rng.uniform(1.5, 4.5, n_samples),
+    )
+    savings_balance = np.round(current_emi * buffer_multiplier, 2)
+
+    depletion_multiplier = np.where(
+        is_strained,
+        rng.uniform(1.8, 3.8, n_samples),
+        rng.uniform(0.95, 1.15, n_samples),
+    )
+    prev_savings = np.round(savings_balance * depletion_multiplier, 2)
+
+    credit_util = np.where(
+        is_strained,
+        rng.uniform(0.70, 0.98, n_samples),
+        rng.uniform(0.18, 0.52, n_samples),
+    )
+
+    complain = df.get("Complain", pd.Series([0] * n_samples)).values
+    late_days = np.where(
+        (deal_vals > 0.50) | (complain == 1),
+        rng.choice([5, 12, 18, 25, 35], n_samples),
+        rng.choice([0, 0, 0, 1, 2], n_samples),
+    )
+
+    records = {
+        "customer_id": cust_ids,
+        "name": names,
+        "phone": phones,
+        "monthly_income": np.round(monthly_income.values, 2),
+        "monthly_expenses": np.round(monthly_expenses.values, 2),
+        "current_emi": current_emi,
+        "remaining_principal": remaining_principal,
+        "remaining_tenure_months": remaining_tenure,
+        "annual_interest_rate": annual_rate,
+        "savings_balance": savings_balance,
+        "previous_savings_balance": prev_savings,
+        "deal_purchase_ratio": np.round(deal_vals, 4),
+        "credit_utilization": np.round(credit_util, 4),
+        "late_payment_days_last_6m": late_days,
+        "dependents": dependents.values,
+    }
+
+    return pd.DataFrame(records)
 
 
 def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) -> pd.DataFrame:
@@ -92,6 +249,7 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
             deal_purchase_ratio = float(np.random.beta(2, 6))  # low deal reliance
             credit_utilization = float(np.random.uniform(0.15, 0.55))
             late_days = int(np.random.choice([0, 0, 0, 0, 1, 2]))
+            dependents = int(np.random.choice([0, 1, 2]))
         else:
             # Distressed borrower (high expense, sudden savings drop, deal hunting, late payments)
             monthly_income = float(np.random.normal(55000, 12000))
@@ -116,6 +274,7 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
             deal_purchase_ratio = float(np.random.uniform(0.65, 0.92))  # heavy deal/coupon reliance
             credit_utilization = float(np.random.uniform(0.75, 0.98))  # maxed out cards
             late_days = int(np.random.choice([5, 12, 18, 25, 40]))
+            dependents = int(np.random.choice([1, 2, 3]))
 
         records.append({
             "customer_id": cust_id,
@@ -132,6 +291,7 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
             "deal_purchase_ratio": round(deal_purchase_ratio, 4),
             "credit_utilization": round(credit_utilization, 4),
             "late_payment_days_last_6m": late_days,
+            "dependents": dependents,
         })
 
     df = pd.DataFrame(records)
@@ -139,28 +299,48 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
 
 
 def load_customer_data(file_path: Optional[str] = None) -> pd.DataFrame:
-    """Load customer CSV data or generate and persist synthetic data if file does not exist.
+    """Load customer dataset, prioritizing marketing_campaign.csv.
+
+    Search priority:
+    1. Explicit file_path argument if provided.
+    2. RAW_DATA_DIR / 'marketing_campaign.csv'
+    3. BASE_DIR.parent / 'data' / 'raw' / 'marketing_campaign.csv'
+    4. Fallback: generate synthetic customer dataset in memory.
 
     Args:
-        file_path: Optional path to CSV file. Defaults to data/raw/customers_sample.csv.
+        file_path: Optional path to CSV file.
 
     Returns:
-        Loaded DataFrame.
+        Standardized DataFrame with customer records.
     """
-    if file_path is None:
-        target_path = RAW_DATA_DIR / "customers_sample.csv"
-    else:
+    target_path: Optional[Path] = None
+
+    if file_path is not None:
         target_path = Path(file_path)
+    else:
+        campaign_candidates = [
+            RAW_DATA_DIR / "marketing_campaign.csv",
+            BASE_DIR.parent / "data" / "raw" / "marketing_campaign.csv",
+        ]
+        for candidate in campaign_candidates:
+            if candidate.exists():
+                target_path = candidate
+                break
 
-    if not target_path.exists():
-        RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-        df = generate_synthetic_customers(n_samples=300, random_seed=42)
-        df.to_csv(target_path, index=False)
-        return df
+    if target_path is None or not target_path.exists():
+        return generate_synthetic_customers(n_samples=300, random_seed=42)
 
-    df = pd.read_csv(target_path)
-    is_valid, missing = validate_schema(df)
+    # Ingest CSV handling delimiters
+    df_raw = load_raw_delimited_csv(target_path)
+
+    # Check if this is the marketing_campaign.csv format
+    if "Income" in df_raw.columns and "NumDealsPurchases" in df_raw.columns:
+        df_processed = parse_marketing_campaign(df_raw)
+    else:
+        df_processed = df_raw
+
+    is_valid, missing = validate_schema(df_processed)
     if not is_valid:
-        raise ValueError(f"CSV is missing required schema columns: {missing}")
+        raise ValueError(f"CSV {target_path} is missing required schema columns: {missing}")
 
-    return df
+    return df_processed

@@ -11,16 +11,19 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
 
 from src.config import MODELS_DIR, ISOLATION_FOREST_PATH, SCALER_PATH, FEATURE_COLUMNS
-from src.data.loader import generate_synthetic_customers
+from src.data.loader import load_customer_data
 from src.data.feature_engineering import compute_stress_features, get_feature_matrix
 
 
 def train_and_save_models():
-    """Train unsupervised stress anomaly model and save scaler and model artifacts."""
+    """Train unsupervised stress anomaly model on customer dataset and save scaler and model artifacts."""
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("Generating synthetic training dataset...")
-    df_raw = generate_synthetic_customers(n_samples=500, random_seed=42)
+    print("Loading customer dataset for training (marketing_campaign.csv)...")
+    df_raw = load_customer_data()
+    print(f"Loaded {len(df_raw)} borrower profiles.")
+
+    print("Computing stress features...")
     df_features = compute_stress_features(df_raw)
     X = get_feature_matrix(df_features)
 
@@ -28,7 +31,7 @@ def train_and_save_models():
     scaler = RobustScaler()
     X_scaled = scaler.fit_transform(X)
 
-    print("Fitting IsolationForest (contamination=0.15)...")
+    print("Fitting IsolationForest (n_estimators=150, contamination=0.15)...")
     iso_forest = IsolationForest(
         n_estimators=150,
         contamination=0.15,

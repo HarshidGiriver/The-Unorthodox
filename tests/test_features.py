@@ -3,6 +3,7 @@
 import pytest
 import pandas as pd
 from src.data.feature_engineering import compute_stress_features
+from src.data.loader import load_customer_data
 
 
 def test_feature_calculation_normal_case():
@@ -76,3 +77,20 @@ def test_stress_index_monotonicity():
     assert df_d["stress_index"].iloc[0] > df_h["stress_index"].iloc[0]
     assert df_d["liquidity_runway_months"].iloc[0] < df_h["liquidity_runway_months"].iloc[0]
     assert df_d["total_outflow_burden"].iloc[0] > 1.0
+
+
+def test_marketing_campaign_loading_and_mapping():
+    """Verify that marketing_campaign.csv loads with 2,240 rows and properly maps attributes."""
+    df = load_customer_data()
+    assert len(df) == 2240
+    assert "dependents" in df.columns
+    assert "deal_purchase_ratio" in df.columns
+    assert df["monthly_income"].isna().sum() == 0
+    assert (df["remaining_principal"] == 300000.0).all()
+    assert (df["current_emi"] == 14400.0).all()
+    assert (df["remaining_tenure_months"] == 24).all()
+    assert (df["annual_interest_rate"] == 0.14).all()
+
+    feat_df = compute_stress_features(df)
+    assert len(feat_df) == 2240
+    assert feat_df["stress_index"].isna().sum() == 0

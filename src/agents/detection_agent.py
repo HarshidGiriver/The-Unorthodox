@@ -56,22 +56,52 @@ class StressDetectionAgent:
         else:
             df_proc = df.copy()
 
-        scores = []
-        is_anomaly_list = []
-        risk_tiers = []
-        primary_drivers = []
+        if self.model is not None and self.scaler is not None:
+            X = get_feature_matrix(df_proc)
+            X_scaled = self.scaler.transform(X)
+            raw_decs = self.model.decision_function(X_scaled)
+            preds = self.model.predict(X_scaled)
+            is_anomalies = (preds == -1)
 
-        for _, row in df_proc.iterrows():
-            result = self.score_customer(row)
-            scores.append(result["anomaly_score"])
-            is_anomaly_list.append(result["is_anomaly"])
-            risk_tiers.append(result["risk_tier"])
-            primary_drivers.append(", ".join(result["top_risk_factors"]))
+            # Vectorized calibration matching score_customer formula
+            anomaly_scores = np.where(
+                is_anomalies,
+                np.clip(0.65 + (np.abs(raw_decs) * 2.5), 0.65, 1.0),
+                np.clip(np.maximum(0.0, 1.0 - (raw_decs / 0.14)) * 0.64, 0.05, 0.64),
+            )
 
-        df_proc["anomaly_score"] = scores
-        df_proc["is_anomaly"] = is_anomaly_list
-        df_proc["risk_tier"] = risk_tiers
-        df_proc["primary_drivers"] = primary_drivers
+            risk_tiers = np.where(
+                anomaly_scores < TIER_1_LOW_RISK_MAX,
+                "Tier 1 (Normal / Low Risk)",
+                np.where(
+                    anomaly_scores < TIER_2_MODERATE_STRESS_MAX,
+                    "Tier 2 (Moderate Stress)",
+                    "Tier 3 (High Anomaly / Severe Distress)",
+                ),
+            )
+
+            df_proc["anomaly_score"] = np.round(anomaly_scores, 4)
+            df_proc["is_anomaly"] = is_anomalies
+            df_proc["risk_tier"] = risk_tiers
+            df_proc["primary_drivers"] = [
+                ", ".join(self._extract_risk_factors(row)) for _, row in df_proc.iterrows()
+            ]
+        else:
+            scores = []
+            is_anomaly_list = []
+            risk_tiers = []
+            primary_drivers = []
+            for _, row in df_proc.iterrows():
+                result = self.score_customer(row)
+                scores.append(result["anomaly_score"])
+                is_anomaly_list.append(result["is_anomaly"])
+                risk_tiers.append(result["risk_tier"])
+                primary_drivers.append(", ".join(result["top_risk_factors"]))
+
+            df_proc["anomaly_score"] = scores
+            df_proc["is_anomaly"] = is_anomaly_list
+            df_proc["risk_tier"] = risk_tiers
+            df_proc["primary_drivers"] = primary_drivers
 
         return df_proc
 

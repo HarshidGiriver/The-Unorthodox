@@ -34,6 +34,45 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
     else:
         df = data.copy()
 
+    # Pre-mapping convenience if raw marketing campaign columns are supplied directly
+    if "monthly_income" not in df.columns and "Income" in df.columns:
+        med = float(df["Income"].dropna().median()) if not df["Income"].dropna().empty else 50000.0
+        df["monthly_income"] = np.maximum(df["Income"].fillna(med).astype(float) / 12.0, 100.0)
+
+    mnt_cols = ["MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds"]
+    if "monthly_expenses" not in df.columns and any(c in df.columns for c in mnt_cols):
+        present_mnt = [c for c in mnt_cols if c in df.columns]
+        df["monthly_expenses"] = df[present_mnt].sum(axis=1).astype(float) / 12.0
+
+    if "deal_purchase_ratio" not in df.columns and "NumDealsPurchases" in df.columns:
+        deals = df.get("NumDealsPurchases", 0).astype(float)
+        web = df.get("NumWebPurchases", 0).astype(float)
+        store = df.get("NumStorePurchases", 0).astype(float)
+        catalog = df.get("NumCatalogPurchases", 0).astype(float)
+        total_p = web + store + catalog + 0.001
+        df["deal_purchase_ratio"] = np.clip(deals / total_p, 0.0, 1.0)
+
+    if "dependents" not in df.columns and ("Kidhome" in df.columns or "Teenhome" in df.columns):
+        df["dependents"] = df.get("Kidhome", 0).astype(int) + df.get("Teenhome", 0).astype(int)
+
+    # Defaults for missing baseline loan servicing if raw data was provided
+    if "current_emi" not in df.columns:
+        df["current_emi"] = 14400.0
+    if "remaining_principal" not in df.columns:
+        df["remaining_principal"] = 300000.0
+    if "remaining_tenure_months" not in df.columns:
+        df["remaining_tenure_months"] = 24
+    if "annual_interest_rate" not in df.columns:
+        df["annual_interest_rate"] = 0.14
+    if "savings_balance" not in df.columns:
+        df["savings_balance"] = 14400.0 * 2.5
+    if "previous_savings_balance" not in df.columns:
+        df["previous_savings_balance"] = df["savings_balance"]
+    if "credit_utilization" not in df.columns:
+        df["credit_utilization"] = 0.35
+    if "late_payment_days_last_6m" not in df.columns:
+        df["late_payment_days_last_6m"] = 0
+
     # Safe conversion to float
     income = np.maximum(df["monthly_income"].astype(float).values, EPSILON)
     expenses = np.maximum(df["monthly_expenses"].astype(float).values, 0.0)
@@ -57,11 +96,9 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
 
     # Heuristic stress index (0 to 100)
     # 1. Outflow burden contribution (up to 30 pts)
-    # > 1.0 means spending more than income
     burden_score = np.clip((total_outflow_burden - 0.5) * 60.0, 0.0, 30.0)
 
     # 2. Liquidity runway contribution (up to 25 pts)
-    # < 1 month runway yields full points, > 6 months yields 0
     runway_score = np.clip((3.0 - liquidity_runway) * (25.0 / 3.0), 0.0, 25.0)
 
     # 3. Savings depletion contribution (up to 15 pts)
