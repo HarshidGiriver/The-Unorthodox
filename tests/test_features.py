@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 from src.data.feature_engineering import compute_stress_features
-from src.data.loader import load_customer_data
+from src.data.loader import load_customer_data, load_raw_delimited_csv
 
 
 def test_feature_calculation_normal_case():
@@ -94,3 +94,21 @@ def test_marketing_campaign_loading_and_mapping():
     feat_df = compute_stress_features(df)
     assert len(feat_df) == 2240
     assert feat_df["stress_index"].isna().sum() == 0
+
+
+def test_triage_queue_records_match_the_source_dataset():
+    """Every dashboard customer is traceable to the corresponding CSV record."""
+    from pathlib import Path
+
+    raw = load_raw_delimited_csv(Path("data/raw/marketing_campaign.csv"))
+    portfolio = load_customer_data()
+
+    assert len(portfolio) == len(raw) == 2240
+    assert portfolio["customer_id"].str.removeprefix("CUST-").astype(int).tolist() == raw["ID"].astype(int).tolist()
+
+    expected_monthly_income = (raw["Income"].fillna(raw["Income"].median()) / 12).round(2)
+    assert portfolio["monthly_income"].tolist() == expected_monthly_income.tolist()
+
+    total_purchases = raw["NumWebPurchases"] + raw["NumStorePurchases"] + raw["NumCatalogPurchases"] + 0.001
+    expected_deal_index = (raw["NumDealsPurchases"] / total_purchases).clip(0, 1).round(4)
+    assert portfolio["deal_purchase_ratio"].tolist() == expected_deal_index.tolist()

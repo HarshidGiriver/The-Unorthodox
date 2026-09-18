@@ -199,6 +199,9 @@ Real-time unsupervised stress detection, non-linear early distress clustering, a
         filtered_df = filtered_df[mask]
         st.info(f"🔍 Filtered by query **'{effective_query}'** — {len(filtered_df):,} matching borrower account(s).")
 
+    # Show the real scored order; never promote a hand-picked borrower.
+    filtered_df = filtered_df.sort_values(by="anomaly_score", ascending=False)
+
     # Display clean table
     display_cols = [
         "customer_id",
