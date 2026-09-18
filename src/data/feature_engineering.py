@@ -122,6 +122,10 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
     df["savings_depletion_rate"] = np.round(depletion_rate, 4)
     df["credit_utilization_ratio"] = np.round(credit_util, 4)
     df["stress_index"] = np.round(composite_stress, 2)
+    if "discretionary_ratio" not in df.columns:
+        df["discretionary_ratio"] = np.round(np.clip(spend_to_income * 0.75, 0.0, 1.0), 4)
+    else:
+        df["discretionary_ratio"] = np.round(df["discretionary_ratio"].astype(float), 4)
 
     return df
 

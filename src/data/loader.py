@@ -99,6 +99,14 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     else:
         monthly_expenses = monthly_income * 0.45
 
+    # Compute discretionary_ratio (Wines, Gold, Sweets relative to total spent)
+    disc_cols = [c for c in ["MntWines", "MntGoldProds", "MntSweetProducts"] if c in df.columns]
+    if disc_cols and present_mnt:
+        discretionary_spent = df[disc_cols].sum(axis=1).astype(float)
+        discretionary_ratio = np.clip(discretionary_spent / (total_spent + 0.001), 0.0, 1.0)
+    else:
+        discretionary_ratio = pd.Series([0.55] * len(df))
+
     # 3. Compute deal_purchase_ratio
     deals = df.get("NumDealsPurchases", 0).astype(float)
     web = df.get("NumWebPurchases", 0).astype(float)
@@ -188,6 +196,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         "credit_utilization": np.round(credit_util, 4),
         "late_payment_days_last_6m": late_days,
         "dependents": dependents.values,
+        "discretionary_ratio": np.round(discretionary_ratio.values, 4),
     }
 
     return pd.DataFrame(records)
@@ -292,6 +301,7 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
             "credit_utilization": round(credit_utilization, 4),
             "late_payment_days_last_6m": late_days,
             "dependents": dependents,
+            "discretionary_ratio": round(float(spend_ratio * 0.75), 4),
         })
 
     df = pd.DataFrame(records)
