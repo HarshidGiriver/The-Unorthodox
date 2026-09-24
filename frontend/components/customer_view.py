@@ -21,14 +21,14 @@ def render_customer_view(df_portfolio: pd.DataFrame):
 <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
 <div>
 <h2 style="font-family: 'Cinzel', serif; margin: 0; color: #08201A; font-weight: 800;">
-📱 Borrower Relief Simulator & Self-Service Portal
+ Borrower Relief Simulator & Self-Service Portal
 </h2>
 <p style="color: #12211C; font-size: 0.95rem; font-weight: 600; margin: 4px 0 0 0;">
 A transparent, stress-free space designed to help you regain financial breathing room and rebuild credit health.
 </p>
 </div>
 <div style="text-align: right;">
-<span class="seal-badge">FAIR PRACTICES COMPLIANT</span>
+<span class="seal-badge">SIMULATED TERMS</span>
 </div>
 </div>""",
         unsafe_allow_html=True,
@@ -38,7 +38,8 @@ A transparent, stress-free space designed to help you regain financial breathing
     col_sel, _ = st.columns([2, 2])
     with col_sel:
         customer_options = df_portfolio["customer_id"].tolist()
-        default_idx = customer_options.index("CUST-4141") if "CUST-4141" in customer_options else 0
+        previous = st.session_state.get("selected_customer_id", "CUST-4141")
+        default_idx = customer_options.index(previous) if previous in customer_options else 0
         
         selected_cust_id = st.selectbox(
             "Select Borrower Account (Demo Persona):",
@@ -51,7 +52,7 @@ A transparent, stress-free space designed to help you regain financial breathing
     # Safely retrieve customer financial baseline
     cust_name = customer.get("name", "Borrower")
     cust_id = customer.get("customer_id", selected_cust_id)
-    current_emi = float(customer.get("current_emi", 14400.0))
+    current_emi = float(customer.get("current_emi", 14403.86))
     rem_principal = float(customer.get("remaining_principal", 300000.0))
     baseline_tenure = int(customer.get("remaining_tenure_months", 24))
     annual_rate = float(customer.get("annual_interest_rate", 0.14))
@@ -65,7 +66,7 @@ A transparent, stress-free space designed to help you regain financial breathing
         f'<span style="font-size: 0.88rem; font-weight: 700; color: #1A2E26;">Account ID: {cust_id} • {BANK_NAME}</span>'
         f'</div>'
         f'<div class="rbi-badge">'
-        f'✓ RBI Fair Practices Verified'
+        f'Demonstration'
         f'</div>'
         f'</div>'
         f'<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: center;">'
@@ -90,7 +91,7 @@ A transparent, stress-free space designed to help you regain financial breathing
     c_left, c_right = st.columns([1, 1])
 
     with c_left:
-        st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>⚙️ Adjust Your Relief Preferences</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>Adjust Your Relief Preferences</h4>", unsafe_allow_html=True)
         
         total_tenure = st.slider(
             "Revised Loan Duration (Months):",
@@ -103,16 +104,16 @@ A transparent, stress-free space designed to help you regain financial breathing
         tenure_extension = total_tenure - baseline_tenure
 
         st.caption(
-            f"ℹ️ Original: **{baseline_tenure} mos** | Extension: **+{tenure_extension} mos** | Revised Tenure: **{total_tenure} mos**"
+            f"Original: **{baseline_tenure} mos** | Extension: **+{tenure_extension} mos** | Revised Tenure: **{total_tenure} mos**"
         )
 
         rate_discount_bps = st.slider(
-            "Pre-Approved Rate Concession (BPS):",
+            "Simulated Rate Concession (BPS):",
             min_value=0,
             max_value=200,
             value=100,
             step=25,
-            help="Bank pre-approved interest rate concession (100 bps = 1.00% reduction).",
+            help="Illustrative interest rate concession (100 bps = 1.00% reduction).",
         )
 
         moratorium = st.slider(
@@ -137,7 +138,7 @@ A transparent, stress-free space designed to help you regain financial breathing
         )
 
     with c_right:
-        st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>💡 Your Immediate Relief Summary</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>Your Immediate Relief Summary</h4>", unsafe_allow_html=True)
         savings = relief_plan["monthly_savings"]
         pct = relief_plan["savings_pct"]
 
@@ -162,11 +163,18 @@ A transparent, stress-free space designed to help you regain financial breathing
         )
         st.markdown(hero_card_html, unsafe_allow_html=True)
 
+    if not relief_plan["target_met"]:
+        st.warning(relief_plan["target_status"])
+    if moratorium:
+        st.info(f"Interest-only payment during the first {moratorium} months: INR {relief_plan['moratorium_payment']:,.2f}. "
+                f"Afterwards: INR {relief_plan['new_emi']:,.2f} per month; final installment may vary by rounding.")
+    st.download_button("Download proposed repayment schedule", relief_plan["amortization_schedule"].to_csv(index=False),
+                       file_name=f"{cust_id}-proposal.csv", mime="text/csv")
     # Visual Amortization Schedule (70% Mild Glassmorphism)
     st.markdown("---")
     st.markdown(
         """<h3 style="font-family: 'Cinzel', serif; color: #08201A; margin: 0 0 14px 0; font-weight: 800;">
-📊 Projected Repayment & Balance Trajectory
+ Projected Repayment & Balance Trajectory
 </h3>""",
         unsafe_allow_html=True,
     )
@@ -208,18 +216,19 @@ A transparent, stress-free space designed to help you regain financial breathing
         barmode="stack",
         xaxis_title="Month",
         yaxis_title="Amount (₹)",
-        xaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880"),
+        xaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880", automargin=True, title_standoff=18),
         yaxis=dict(gridcolor="#EADFCF", zerolinecolor="#C5A880"),
-        margin=dict(t=30, b=20, l=20, r=20),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.25),
+        height=520,
+        margin=dict(t=30, b=150, l=65, r=25),
+        legend=dict(orientation="v", x=0, xanchor="left", yanchor="top", y=-0.3),
     )
     st.plotly_chart(fig, use_container_width=True)
 
     # Transparent Statutory Acceptance
     st.markdown("---")
-    st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>📜 Statutory Terms & Single-Click Acceptance</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='font-family: Cinzel, serif; color: #08201A; font-weight: 800;'>Proposed Terms & Simulated Acceptance</h4>", unsafe_allow_html=True)
     st.info(
-        f"**Statutory Disclosure under RBI Fair Practices Code for Lenders (FPC):**\n\n"
+        f"**Illustrative repayment disclosures (not a certified legal notice):**\n\n"
         f"1. This restructuring offer is entirely voluntary and is extended to assist you during temporary cash flow tightness.\n"
         f"2. Total lifetime interest on restructured plan is ₹{relief_plan['total_interest_new']:,.2f} (compared to ₹{relief_plan['total_interest_old']:,.2f} on original terms due to tenure extension).\n"
         f"3. For grievances or complaints, contact Bank Grievance Redressal Officer: "
@@ -228,20 +237,5 @@ A transparent, stress-free space designed to help you regain financial breathing
 
     consent = st.checkbox("I have reviewed the restructured schedule and agree to the revised repayment terms.")
 
-    # Professional Animation & Feedback (Replaces Balloons)
-    if st.button("✅ Confirm & Activate Restructured Payment Plan", disabled=not consent):
-        st.toast("Restructured Repayment Terms Activated Successfully", icon="✨")
-        success_html = (
-            f'<div class="kintsugi-success-banner">'
-            f'<div class="kintsugi-success-icon">✓</div>'
-            f'<div>'
-            f'<h4 style="margin: 0; color: #08201A; font-family: \'Cinzel\', serif; font-size: 1.15rem;">'
-            f'Restructured Plan Activated Successfully'
-            f'</h4>'
-            f'<p style="margin: 4px 0 0 0; color: #12211C; font-size: 0.92rem; font-weight: 600;">'
-            f'Congratulations <strong>{cust_name}</strong>! Your revised monthly payment of <strong>₹{relief_plan["new_emi"]:,.2f}</strong> has been registered. An updated loan schedule and agreement have been dispatched to your verified contact details.'
-            f'</p>'
-            f'</div>'
-            f'</div>'
-        )
-        st.markdown(success_html, unsafe_allow_html=True)
+    if st.button("Preview simulated acceptance", disabled=not consent):
+        st.info("Simulation only: no repayment terms have changed and no agreement has been sent.")

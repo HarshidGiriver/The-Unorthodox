@@ -1,4 +1,4 @@
-name: FinSafe AI CI Pipeline
+name: Kintsugi AI CI Pipeline
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Check out repository
@@ -42,3 +42,10 @@ jobs:
       - name: Verify package structure
         run: |
           python -c "import backend; import backend.agents; import backend.data; import backend.utils; print('Package structure verified successfully!')"
+
+      - name: Build distributable and smoke test installed wheel
+        run: |
+          python -m build
+          pip install --no-deps dist/*.whl
+          cd /tmp
+          python -c "from backend.data.loader import load_customer_data; from backend.config import ASSETS_DIR; assert len(load_customer_data()) == 2240; assert (ASSETS_DIR / 'kintsugi_logo_thumb.png').exists()"

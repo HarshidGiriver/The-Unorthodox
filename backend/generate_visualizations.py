@@ -1,4 +1,4 @@
-"""Generate publication-grade evaluation visualizations for FinSafe AI.
+"""Generate publication-grade evaluation visualizations for Kintsugi AI.
 
 Scores the official 2,240-row marketing_campaign.csv dataset using
 StressDetectionAgent and outputs three 300-DPI dark/fintech-themed charts:
@@ -150,7 +150,7 @@ def generate_distress_distribution_chart(df_scored: pd.DataFrame, output_path: P
 
     # Title and subtitle without overlap
     ax.set_title(
-        "FinSafe AI: Continuous Borrower Distress Score Distribution\n"
+        "Kintsugi AI: Continuous Borrower Distress Score Distribution\n"
         f"Unsupervised Isolation Forest Calibration (N = {total:,} Borrowers | Contamination = 15.0%)",
         fontsize=14,
         fontweight="bold",
@@ -227,7 +227,7 @@ def generate_deal_vs_spend_scatter_chart(df_scored: pd.DataFrame, output_path: P
 
     # Highlight anomalous cluster
     ax.annotate(
-        f"Critical Anomaly Cluster\nMean Deal Reliance: {deal_mean_anomaly:.2f} (Normal: {deal_mean_normal:.2f})\n+151% Reliance on Discount Purchases\nPre-delinquency behavioral shift",
+        f"Critical Anomaly Cluster\nMean Deal Reliance: {deal_mean_anomaly:.2f} (Normal: {deal_mean_normal:.2f})\nDescriptive cohort comparison\nGenerated financial proxies",
         xy=(deal_mean_anomaly, disc_mean_anomaly),
         xytext=(0.58, 0.22),
         arrowprops=dict(
@@ -244,7 +244,7 @@ def generate_deal_vs_spend_scatter_chart(df_scored: pd.DataFrame, output_path: P
 
     ax.set_title(
         "Behavioral Distress Separation: Deal Reliance vs. Discretionary Spending\n"
-        "Isolation Forest identifies coupon hunting as an early symptom of cashflow distress prior to formal default",
+        "Demo anomaly separation; not validated prediction of future default",
         fontsize=13,
         fontweight="bold",
         pad=16,
@@ -328,7 +328,7 @@ def generate_risk_drivers_comparison_chart(df_scored: pd.DataFrame, output_path:
 
         # Bar chart for this indicator
         bars = ax.bar(
-            ["Normal\n(n=1,904)", "Distressed\n(n=336)"],
+            [f"Typical\n(n={len(normal):,})", f"Anomalous\n(n={len(distressed):,})"],
             [mean_norm, mean_dist],
             color=[PALETTE["tier1"], PALETTE["tier3"]],
             width=0.55,
@@ -406,7 +406,7 @@ def generate_risk_drivers_comparison_chart(df_scored: pd.DataFrame, output_path:
 def run_pipeline() -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """Execute complete ingestion, scoring, and visualization pipeline with telemetry."""
     print("=" * 70)
-    print("FinSafe AI: Exploratory Visualization & Anomaly Evaluation Pipeline")
+    print("Kintsugi AI: Exploratory Visualization & Anomaly Evaluation Pipeline")
     print("=" * 70)
 
     # 1. Ingestion

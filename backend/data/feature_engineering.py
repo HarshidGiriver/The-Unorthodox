@@ -4,6 +4,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from backend.config import FEATURE_COLUMNS
+from backend.finance import BASELINE_EMI
 
 EPSILON = 1e-5
 
@@ -45,19 +46,19 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
         df["monthly_expenses"] = df[present_mnt].sum(axis=1).astype(float)
 
     if "deal_purchase_ratio" not in df.columns and "NumDealsPurchases" in df.columns:
-        deals = df.get("NumDealsPurchases", 0).astype(float)
-        web = df.get("NumWebPurchases", 0).astype(float)
-        store = df.get("NumStorePurchases", 0).astype(float)
-        catalog = df.get("NumCatalogPurchases", 0).astype(float)
+        deals = df.get("NumDealsPurchases", pd.Series(0, index=df.index)).astype(float)
+        web = df.get("NumWebPurchases", pd.Series(0, index=df.index)).astype(float)
+        store = df.get("NumStorePurchases", pd.Series(0, index=df.index)).astype(float)
+        catalog = df.get("NumCatalogPurchases", pd.Series(0, index=df.index)).astype(float)
         total_p = web + store + catalog + 0.001
         df["deal_purchase_ratio"] = np.clip(deals / total_p, 0.0, 1.0)
 
     if "dependents" not in df.columns and ("Kidhome" in df.columns or "Teenhome" in df.columns):
-        df["dependents"] = df.get("Kidhome", 0).astype(int) + df.get("Teenhome", 0).astype(int)
+        df["dependents"] = df.get("Kidhome", pd.Series(0, index=df.index)).astype(int) + df.get("Teenhome", pd.Series(0, index=df.index)).astype(int)
 
     # Defaults for missing baseline loan servicing if raw data was provided
     if "current_emi" not in df.columns:
-        df["current_emi"] = 14400.0
+        df["current_emi"] = BASELINE_EMI
     if "remaining_principal" not in df.columns:
         df["remaining_principal"] = 300000.0
     if "remaining_tenure_months" not in df.columns:
@@ -65,7 +66,7 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
     if "annual_interest_rate" not in df.columns:
         df["annual_interest_rate"] = 0.14
     if "savings_balance" not in df.columns:
-        df["savings_balance"] = 14400.0 * 2.5
+        df["savings_balance"] = BASELINE_EMI * 2.5
     if "previous_savings_balance" not in df.columns:
         df["previous_savings_balance"] = df["savings_balance"]
     if "credit_utilization" not in df.columns:
@@ -73,6 +74,16 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
     if "late_payment_days_last_6m" not in df.columns:
         df["late_payment_days_last_6m"] = 0
 
+    required = ["monthly_income", "monthly_expenses", "current_emi", "savings_balance",
+                "previous_savings_balance", "deal_purchase_ratio", "credit_utilization",
+                "late_payment_days_last_6m"]
+    for col in required:
+        if col not in df:
+            raise ValueError(f"Missing feature input: {col}")
+        values = pd.to_numeric(df[col], errors="coerce")
+        if not np.isfinite(values.to_numpy(dtype=float)).all() or (values < 0).any():
+            raise ValueError(f"{col} must contain finite nonnegative numbers")
+        df[col] = values
     # Safe conversion to float
     income = np.maximum(df["monthly_income"].astype(float).values, EPSILON)
     expenses = np.maximum(df["monthly_expenses"].astype(float).values, 0.0)
@@ -139,4 +150,7 @@ def get_feature_matrix(df: pd.DataFrame) -> np.ndarray:
     Returns:
         2D numpy array of features in standard column order.
     """
-    return df[FEATURE_COLUMNS].values
+    matrix = df[FEATURE_COLUMNS].to_numpy(dtype=float)
+    if not np.isfinite(matrix).all():
+        raise ValueError("Engineered features must be finite; review input magnitudes and units")
+    return matrix

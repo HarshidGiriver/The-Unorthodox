@@ -5,11 +5,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import joblib
+import hashlib
+import json
 
 from backend.config import (
     ISOLATION_FOREST_PATH,
     SCALER_PATH,
     FEATURE_COLUMNS,
+    FEATURE_SCHEMA_VERSION,
     TIER_1_LOW_RISK_MAX,
     TIER_2_MODERATE_STRESS_MAX,
 )
@@ -28,6 +31,8 @@ class StressDetectionAgent:
         self.scaler_path = scaler_path or SCALER_PATH
         self.model = None
         self.scaler = None
+        self.model_version = "heuristic-v2"
+        self.artifact_warning = ""
         self._load_artifacts()
 
     def _load_artifacts(self) -> None:
@@ -36,10 +41,28 @@ class StressDetectionAgent:
             try:
                 self.scaler = joblib.load(self.scaler_path)
                 self.model = joblib.load(self.model_path)
+                model_hash = hashlib.sha256(self.model_path.read_bytes()).hexdigest()
+                scaler_hash = hashlib.sha256(self.scaler_path.read_bytes()).hexdigest()
+                self.model_version = model_hash[:16] + ":" + scaler_hash[:16]
+                metadata_path = self.model_path.with_suffix(".metadata.json")
+                if metadata_path.exists():
+                    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+                    if metadata["model_sha256"] != model_hash or metadata["scaler_sha256"] != scaler_hash:
+                        raise ValueError("Model/scaler provenance mismatch")
+                    if metadata["features"] != FEATURE_COLUMNS or metadata["feature_version"] != FEATURE_SCHEMA_VERSION:
+                        raise ValueError("Model feature contract mismatch")
+                    from importlib.metadata import version
+                    if metadata["dependencies"]["scikit-learn"] != version("scikit-learn"):
+                        raise ValueError("Model training/runtime scikit-learn versions differ; retrain with this environment")
+                else:
+                    self.artifact_warning = "Model provenance metadata is missing; retrain before relying on these artifacts."
+                if self.model.n_features_in_ != len(FEATURE_COLUMNS) or self.scaler.n_features_in_ != len(FEATURE_COLUMNS):
+                    raise ValueError("Artifact feature count does not match the current schema")
             except Exception as e:
                 print(f"Warning: Could not load trained models from disk ({e}). Fallback to heuristic scoring.")
                 self.scaler = None
                 self.model = None
+                self.model_version = "heuristic-v2"
 
     def analyze_portfolio(self, df: pd.DataFrame) -> pd.DataFrame:
         """Analyze entire customer portfolio, appending risk scores and tiers.
@@ -51,10 +74,7 @@ class StressDetectionAgent:
             Enriched DataFrame with anomaly scores, risk tiers, and primary drivers.
         """
         # Ensure features are computed
-        if "stress_index" not in df.columns:
-            df_proc = compute_stress_features(df)
-        else:
-            df_proc = df.copy()
+        df_proc = compute_stress_features(df)
 
         if self.model is not None and self.scaler is not None:
             X = get_feature_matrix(df_proc)
@@ -103,6 +123,13 @@ class StressDetectionAgent:
             df_proc["risk_tier"] = risk_tiers
             df_proc["primary_drivers"] = primary_drivers
 
+        df_proc.attrs.update(df.attrs)
+        df_proc.attrs["model_version"] = self.model_version
+        if self.artifact_warning:
+            df_proc.attrs["scoring_warning"] = self.artifact_warning
+        df_proc.attrs["scoring_mode"] = "isolation_forest" if self.model is not None else "heuristic"
+        if self.model is None:
+            df_proc.attrs["scoring_warning"] = "Trained artifacts unavailable: scores use heuristic rules, not Isolation Forest."
         return df_proc
 
     def score_customer(self, customer_data: pd.Series) -> Dict[str, Any]:
@@ -138,7 +165,7 @@ class StressDetectionAgent:
             # Heuristic fallback using engineered stress_index
             stress_idx = float(customer_data.get("stress_index", 30.0))
             anomaly_score = float(np.clip(stress_idx / 100.0, 0.0, 1.0))
-            is_anomaly = anomaly_score >= 0.55
+            is_anomaly = anomaly_score >= TIER_2_MODERATE_STRESS_MAX
 
         # Determine Risk Tier
         if anomaly_score < TIER_1_LOW_RISK_MAX:

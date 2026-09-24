@@ -1,0 +1,6 @@
+recursive-include assets *.jpg *.png
+recursive-include models *.joblib *.json
+recursive-include data/raw *.csv
+recursive-include frontend/styles *.css
+include requirements-lock.txt
+recursive-include docs *.md

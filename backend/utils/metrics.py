@@ -1,7 +1,6 @@
 """Portfolio-level risk metrics and KPI calculation engine."""
 
 from typing import Dict, Any
-import numpy as np
 import pandas as pd
 
 

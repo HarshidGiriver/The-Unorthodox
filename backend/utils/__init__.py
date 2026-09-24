@@ -1,4 +1,4 @@
-"""Utility modules for FinSafe AI."""
+"""Utility modules for Kintsugi AI."""
 
 from .metrics import calculate_portfolio_kpis
 

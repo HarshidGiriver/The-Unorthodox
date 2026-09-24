@@ -1,7 +1,6 @@
 """Unit tests for stress feature calculations."""
 
 import pytest
-import pandas as pd
 from backend.data.feature_engineering import compute_stress_features
 from backend.data.loader import load_customer_data, load_raw_delimited_csv
 
@@ -87,7 +86,7 @@ def test_marketing_campaign_loading_and_mapping():
     assert "deal_purchase_ratio" in df.columns
     assert df["monthly_income"].isna().sum() == 0
     assert (df["remaining_principal"] == 300000.0).all()
-    assert (df["current_emi"] == 14400.0).all()
+    assert (df["current_emi"] == 14403.86).all()
     assert (df["remaining_tenure_months"] == 24).all()
     assert (df["annual_interest_rate"] == 0.14).all()
 

@@ -325,7 +325,7 @@ div[data-testid="stTextInput"]:has(input[placeholder*="Search borrower"]) input:
   overflow: hidden;
 }
 
-.kpi-card:hover {
+.kpi-card:not(.kpi-card-hero):hover {
   background: var(--glass-card-hover) !important;
   transform: translateY(-3px);
   box-shadow: var(--shadow-hover);
@@ -694,4 +694,35 @@ div[data-testid="stTextInput"]:has(input[placeholder*="Search borrower"]) input:
   font-size: 0.95rem;
   display: inline-block;
   box-shadow: 0 4px 14px rgba(10, 43, 36, 0.25);
+}
+
+/* Responsive layouts and accessible interaction states. */
+@media (max-width: 768px) {
+  .kintsugi-hero-banner { padding: 22px 18px; }
+  .kintsugi-hero-content { max-width: 100%; }
+  .kintsugi-hero-title { font-size: 1.7rem; }
+  .kintsugi-slogan-vertical { display: none; }
+  .kintsugi-user-pill { flex-wrap: wrap; justify-content: flex-start; height: auto; }
+  .glass-panel { padding: 18px 14px; overflow-wrap: anywhere; }
+  .kpi-card { padding: 16px; }
+  .glass-panel > div { flex-wrap: wrap; }
+  .glass-panel div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+  [data-testid="stColumn"] { min-width: min(100%, 280px); flex: 1 1 100%; }
+}
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 3px solid #B87908 !important;
+  outline-offset: 3px !important;
+}
+.stButton > button:disabled { opacity: 0.55; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Dark cards retain their contrast when hovered or focused. */
+.kpi-card-hero:hover, .kpi-card-hero:focus-within {
+  background: var(--glass-card-dark) !important;
+  color: var(--text-on-dark) !important;
+  border-color: var(--gold-metallic) !important;
+  box-shadow: var(--shadow-dark-hero) !important;
 }

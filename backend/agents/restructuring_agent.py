@@ -1,7 +1,7 @@
 """Debt Restructuring Agent: Deterministic debt amortization solver and relief optimizer."""
 
-from typing import Dict, Any, List, Optional
-import numpy as np
+from typing import Dict, Any, Optional
+from backend.finance import calculate_emi, number, integer
 import pandas as pd
 
 from backend.config import (
@@ -29,16 +29,7 @@ class DebtRestructuringAgent:
         Returns:
             Calculated monthly EMI rounded to 2 decimal places.
         """
-        if tenure_months <= 0 or principal <= 0:
-            return 0.0
-
-        r = annual_rate / 12.0
-        if r == 0:
-            return round(principal / tenure_months, 2)
-
-        factor = (1.0 + r) ** tenure_months
-        emi = principal * r * factor / (factor - 1.0)
-        return round(float(emi), 2)
+        return calculate_emi(principal, annual_rate, tenure_months)
 
     def generate_amortization_schedule(
         self,
@@ -62,8 +53,11 @@ class DebtRestructuringAgent:
         Returns:
             DataFrame with monthly breakdown.
         """
+        calculate_emi(principal, annual_rate, tenure_months)
+        integer(moratorium_months, "moratorium_months", 0, min(MAX_MORATORIUM_MONTHS, tenure_months - 1))
+        principal = round(principal, 2)
         r = annual_rate / 12.0
-        active_tenure = max(1, tenure_months - moratorium_months)
+        active_tenure = tenure_months - moratorium_months
         normal_emi = self.calculate_emi(principal, annual_rate, active_tenure)
 
         schedule = []
@@ -74,7 +68,6 @@ class DebtRestructuringAgent:
             interest_charge = round(beginning_balance * r, 2)
 
             if month <= moratorium_months:
-                # During moratorium: borrower only pays accrued interest (or 0 with capitalization)
                 # Standard relief: interest-only servicing during moratorium
                 emi_paid = interest_charge
                 principal_paid = 0.0
@@ -134,34 +127,38 @@ class DebtRestructuringAgent:
         Returns:
             Dictionary detailing old terms, new terms, savings, and amortization schedule.
         """
-        # Apply concessions within policy constraints
-        applied_bps = min(rate_concession_bps, MAX_RATE_CONCESSION_BPS)
-        restructured_rate = max(0.06, annual_rate - (applied_bps / 10000.0))
-        applied_moratorium = min(moratorium_months, MAX_MORATORIUM_MONTHS)
-
-        # Determine tenure extension
+        calculate_emi(remaining_principal, annual_rate, current_tenure_months)
+        number(current_emi, "current_emi", 0.01)
+        number(target_emi_reduction_pct, "target_emi_reduction_pct", 0, 0.99)
+        integer(rate_concession_bps, "rate_concession_bps", 0, MAX_RATE_CONCESSION_BPS)
+        integer(moratorium_months, "moratorium_months", 0, MAX_MORATORIUM_MONTHS)
+        applied_bps = rate_concession_bps
+        restructured_rate = max(0.0, annual_rate - applied_bps / 10000)
+        applied_moratorium = moratorium_months
+        target_emi = round(current_emi * (1 - target_emi_reduction_pct), 2)
         if tenure_extension_months is None:
-            # Auto-solve for tenure extension to achieve target EMI reduction
-            target_emi = current_emi * (1.0 - target_emi_reduction_pct)
-            best_extension = 0
-            for ext in range(0, MAX_TENURE_EXTENSION_MONTHS + 1, 6):
-                trial_tenure = current_tenure_months + ext
-                trial_emi = self.calculate_emi(remaining_principal, restructured_rate, trial_tenure)
-                if trial_emi <= target_emi or ext == MAX_TENURE_EXTENSION_MONTHS:
-                    best_extension = ext
+            applied_extension = MAX_TENURE_EXTENSION_MONTHS
+            for ext in range(MAX_TENURE_EXTENSION_MONTHS + 1):
+                active_months = current_tenure_months + ext - applied_moratorium
+                if active_months > 0 and self.calculate_emi(
+                    remaining_principal, restructured_rate, active_months
+                ) <= target_emi:
+                    applied_extension = ext
                     break
-            applied_extension = best_extension
         else:
-            applied_extension = min(tenure_extension_months, MAX_TENURE_EXTENSION_MONTHS)
+            integer(tenure_extension_months, "tenure_extension_months", 0, MAX_TENURE_EXTENSION_MONTHS)
+            applied_extension = tenure_extension_months
+        if current_tenure_months + applied_extension <= applied_moratorium:
+            raise ValueError("At least one active repayment month is required after the moratorium")
 
         new_tenure = current_tenure_months + applied_extension
         new_emi = self.calculate_emi(
             remaining_principal,
             restructured_rate,
-            max(1, new_tenure - applied_moratorium),
+            new_tenure - applied_moratorium,
         )
 
-        monthly_savings = max(0.0, current_emi - new_emi)
+        monthly_savings = current_emi - new_emi
         savings_pct = (monthly_savings / current_emi) if current_emi > 0 else 0.0
 
         # Generate complete amortization schedule
@@ -172,17 +169,25 @@ class DebtRestructuringAgent:
             moratorium_months=applied_moratorium,
         )
 
-        total_interest_old = round((current_emi * current_tenure_months) - remaining_principal, 2)
+        original_schedule = self.generate_amortization_schedule(
+            remaining_principal, annual_rate, current_tenure_months
+        )
+        total_interest_old = round(float(original_schedule["interest_paid"].sum()), 2)
         total_interest_new = round(float(schedule_df["interest_paid"].sum()), 2)
 
         return {
+            "target_emi": target_emi,
+            "target_met": new_emi <= target_emi,
+            "target_status": "met" if new_emi <= target_emi else "Requested reduction is not met within these terms",
+            "moratorium_payment": round(remaining_principal * restructured_rate / 12, 2) if applied_moratorium else 0.0,
+            "original_schedule": original_schedule,
             "principal": remaining_principal,
             "old_tenure_months": current_tenure_months,
             "new_tenure_months": new_tenure,
             "tenure_extension_months": applied_extension,
             "old_annual_rate": annual_rate,
-            "new_annual_rate": round(restructured_rate, 4),
-            "rate_concession_bps": applied_bps,
+            "new_annual_rate": restructured_rate,
+            "rate_concession_bps": round((annual_rate - restructured_rate) * 10000, 4),
             "moratorium_months": applied_moratorium,
             "old_emi": current_emi,
             "new_emi": new_emi,

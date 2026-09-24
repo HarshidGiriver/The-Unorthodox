@@ -1,0 +1,37 @@
+{
+  "trained_at": "2026-09-24T07:22:06.881175+00:00",
+  "python": "3.14.7",
+  "dependencies": {
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "joblib": "1.5.3"
+  },
+  "feature_version": "2-monthly-demo-consistent-emi",
+  "features": [
+    "spend_to_income_ratio",
+    "emi_burden_ratio",
+    "deal_reliance_index",
+    "liquidity_runway_months",
+    "savings_depletion_rate",
+    "credit_utilization_ratio",
+    "late_payment_days_last_6m"
+  ],
+  "dataset_sha256": "cd0affa36b1b981e80ba0e27767e9b3ab723f7a3dba948f722af81abc6b990ea",
+  "feature_matrix_sha256": "cd39b71262984cbc275c2a0af86bba222d3189316975c6d1cb6926eb3d51ce1a",
+  "model_sha256": "ce4f707b3447c5e78f66cc35cfb5553b4ec58fc6a994c162d612197932d7b0c0",
+  "scaler_sha256": "df6ae9dc233a4c5372f982a84c2e5288cdb6114e1d0eb9a3786abc7136fa61e1",
+  "training_rows": 2240,
+  "data_source": "marketing_simulation",
+  "evaluation": {
+    "split": "seeded random 70/30; descriptive demo evaluation, not prospective validation",
+    "train_rows": 1568,
+    "holdout_rows": 672,
+    "isolation_forest_anomaly_rate": 0.15625,
+    "rules_anomaly_rate": 0.01488095238095238,
+    "agreement": 0.8586309523809523,
+    "outcome_metrics": null,
+    "limitations": "Anomaly separation is not proof of default prediction. Demo finance fields are generated."
+  },
+  "final_model": "Refitted on the complete dataset after separate holdout evaluation"
+}

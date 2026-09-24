@@ -1,248 +1,96 @@
-# FinSafe AI: Autonomous Financial Distress Detection & Debt Restructuring Engine
+# Kintsugi AI
 
-[![FinSafe CI](https://github.com/HarshidGiriver/The-Unorthodox/actions/workflows/ci.yml/badge.svg)](https://github.com/HarshidGiriver/The-Unorthodox/actions/workflows/ci.yml)
-[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Regulatory Adherence](https://img.shields.io/badge/Compliance-RBI%20Fair%20Practices%20Code-emerald)](https://www.rbi.org.in/)
+Streamlit application for borrower anomaly review and voluntary repayment proposals.
 
-FinSafe AI is an enterprise-grade intelligent platform designed for banking institutions and non-banking financial companies (NBFCs). It detects early, non-linear signals of borrower distress **before formal delinquency occurs**, calculates mathematically invariant debt restructuring plans, and dispatches dignified, empathetic customer outreach in strict compliance with the **Reserve Bank of India (RBI) Fair Practices Code for Lenders**.
+- **Demonstration:** marketing records with generated finances. Approval previews do not change accounts.
+- **Saved workflow:** authenticated roles, SQLite storage, versioned proposals, review decisions, exact-term consent, local activation, delivery tracking and payment receipts.
 
----
+This is a local prototype, not a core banking integration or certified compliance product. Anomaly indicators are not probabilities of default. Sample contacts are placeholders.
 
-## 🏛️ System Architecture
+## Run
 
-```mermaid
-flowchart TD
-    A[Raw Borrower Financial Records] --> B[Data Ingestion & Schema Validator]
-    B --> C[Feature Engineering Engine]
-
-    subgraph Feature Space
-        C --> C1[Spend-to-Income Ratio]
-        C --> C2[Deal & Coupon Reliance Index]
-        C --> C3[Liquidity Runway Velocity]
-        C --> C4[Debt Burden Ratio - DBR]
-    end
-
-    C1 & C2 & C3 & C4 --> D[Unsupervised Detection Agent]
-    D -->|RobustScaler + Isolation Forest| E{Stress Stratification}
-
-    E -->|Tier 1: Normal| F1[Standard Monitoring]
-    E -->|Tier 2: Moderate| F2[Proactive Advisory]
-    E -->|Tier 3: Severe Anomaly| G[Deterministic Restructuring Agent]
-
-    subgraph Mathematical Restructuring Solver
-        G --> G1[Tenure Extension Solver]
-        G --> G2[Interest Concession Calculator]
-        G --> G3[Moratorium / Grace Scheduler]
-        G1 & G2 & G3 --> H[Mathematical Invariance Guarantee]
-    end
-
-    H --> I[Empathetic Outreach Agent]
-    I -->|RBI Fair Practices Verification| J[Multi-Channel Dispatch: Email / SMS]
-
-    subgraph Streamlit Command Center
-        D & H & I --> K[Bank Underwriter Triage Queue]
-        H & I --> L[Mobile Customer Relief Simulator]
-    end
-```
-
----
-Architecture design :
-<img width="4544" height="8192" alt="Borrower Financial Data-2026-09-18-100456" src="https://github.com/user-attachments/assets/84a5a2df-adc3-45c6-9212-7457000a2818" />
-
-## 🚀 Key Modules & Capabilities
-
-### 1. 🔍 Unsupervised Stress Detection Agent (`backend/agents/detection_agent.py`)
-- Ingests non-linear behavioral proxies for distress (e.g. abrupt shifts toward emergency discount shopping, accelerating liquid buffer burn rate, rising credit card utilization).
-- Leverages an unsupervised **Isolation Forest** fitted on scaled multidimensional features to isolate abnormal trajectories before credit bureau delinquency flags.
-- Maps continuous anomaly decision scores to three operational tiers:
-  - **Tier 1 (Normal / Low Risk)**: Stable cash flow profile.
-  - **Tier 2 (Moderate Stress)**: Early liquidity tightening.
-  - **Tier 3 (High Anomaly / Severe Distress)**: Immediate restructuring recommended.
-
-### 2. 📐 Deterministic Debt Restructuring Agent (`backend/agents/restructuring_agent.py`)
-- Eliminates AI hallucination risk in loan servicing by using pure closed-form financial mathematics:
-  $$\text{EMI} = \frac{P \cdot r \cdot (1+r)^n}{(1+r)^n - 1}$$
-  where $P$ is outstanding principal, $r = \frac{\text{APR}}{12}$, and $n$ is repayment tenure in months.
-- **Mathematical Invariance Guarantee**:
-  $$\sum_{t=1}^{n} \text{Principal Repaid}_t = P, \quad \text{Ending Balance}_n = 0$$
-- Solves for optimal tenure extensions (up to 36 months), interest concessions (up to 200 bps), and grace periods (1–6 months).
-
-### 3. 🕊️ Empathetic Outreach Agent (`backend/agents/outreach_agent.py`)
-- Generates transparent, respectful communications in English and Hindi.
-- **Strict RBI Fair Practices Code for Lenders (FPC) Compliance**:
-  - Zero coercive, intimidating, or threatening language.
-  - Contact timing enforcement (restricted strictly to permissible hours: **08:00 AM – 07:00 PM**).
-  - Mandatory disclosure of revised tenure, new EMI, lifetime interest variance, and the official Bank Grievance Redressal Officer contact.
-
-### 4. 💻 Command Center UI (`frontend/app.py`)
-- **Bank Underwriter View**: Executive portfolio KPIs, Portfolio at Risk (PAR 30), risk stratification charts, filterable triage queue, and 1-click restructuring dispatch.
-- **Customer Relief Simulator**: Mobile-responsive interactive portal with live EMI reduction calculators, month-by-month repayment curves, and statutory consent flows.
-
----
-
-## 📊 Model Training, Calibration & Evaluation Proof
-
-In strict compliance with hackathon requirements ("*Include trained or fine-tuned ML/DL as core component, not just API calls*"), FinSafe AI employs a locally trained and serialized unsupervised **Isolation Forest** paired with a **RobustScaler** (`models/isolation_forest.joblib`, `models/scaler.joblib`).
-
-The baseline model was trained and evaluated on the official 2,240-row benchmark dataset using `backend/train_models.py` and `notebooks/01_exploratory_stress.ipynb`.
-
-### 1. Continuous Distress Score Distribution & KDE
-![Continuous Distress Score Distribution](assets/distress_distribution.png)
-- **Mathematical Contamination Rate**: Fixed at $\alpha = 0.15$ (top 15% most anomalous trajectories = 336 accounts).
-- **Stratification**:
-  - **Tier 1 (Low Risk / Healthy)**: 1,212 accounts (54.1%)
-  - **Tier 2 (Moderate Stress)**: 692 accounts (30.9%)
-  - **Tier 3 (Severe Distress / Intervention Trigger)**: 336 accounts (15.0%)
-
-### 2. Behavioral Distress Separation (Pre-Delinquency Vector)
-![Deal Reliance vs. Discretionary Spending](assets/deal_vs_spend_scatter.png)
-- Isolates how borrowers transition toward emergency deal/coupon hunting (`deal_reliance_index > 0.40`) prior to formal credit bureau default.
-
-### 3. Quantitative Risk Driver Deltas
-![Key Risk Driver Comparison](assets/risk_drivers_comparison.png)
-
-| Performance & Engineering Metric | Value / Benchmark | Engineering Rationale |
-| :--- | :--- | :--- |
-| **Model Algorithm** | `IsolationForest(n_estimators=150, contamination=0.15)` | Unsupervised isolation of sparse distress trajectories without biased default labels |
-| **Feature Transformation** | `RobustScaler` (Median & IQR centered) | Immune to high-income outlier distortion |
-| **Portfolio Scoring Latency** | **224.44 ms total** (0.100 ms / account) | Real-time vectorized inference suitable for high-throughput core banking queues |
-| **Mathematical Invariance** | $\sum Principal_t = P, \quad Balance_n = 0.00$ | Deterministic loan amortization; zero LLM arithmetic hallucination risk |
-| **Automated Unit Tests** | **9 / 9 Passed** (`pytest tests/ -v`) | 100% test coverage over feature engineering, math invariance, and edge cases |
-
----
-
-## 📚 Dataset Attribution & Open Innovation Compliance
-
-In compliance with Open Innovation track guidelines requiring all datasets to be publicly accessible and properly cited:
-
-- **Dataset Name**: Customer Personality Analysis (`marketing_campaign.csv`)
-- **Author / Source**: Dr. Omar Romero-Hernandez
-- **Public Repository**: [Kaggle Customer Personality Analysis](https://www.kaggle.com/datasets/imakash3011/customer-personality-analysis)
-- **License / Access**: Open Data Commons Public Domain Dedication and License (PDDL / CC0)
-- **Ingestion & Processing Pipeline**:
-  - Loaded with multi-delimiter resilience (`\t`, `,`, `;`) via `backend/data/loader.py`.
-  - Missing income values imputed via median; expenditure aggregated across food, beverage, and discretionary categories.
-  - Baseline retail loan parameters calibrated to simulate an active ₹67.2 Crore retail loan book (₹3,00,000 principal, ₹14,400 monthly EMI, 24-month baseline tenure, 14% APR).
-  - Every dashboard account is 100% traceable back to its underlying raw record (verified by unit test `test_triage_queue_records_match_the_source_dataset`).
-
----
-
-## 📂 Repository Layout
-
-```
-The-Unorthodox/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                 # Automated linting & test pipeline
-├── data/
-│   └── raw/                       # Customer / campaign dataset
-├── models/
-│   ├── isolation_forest.joblib    # Trained unsupervised anomaly model
-│   └── scaler.joblib              # Fitted feature preprocessing pipeline
-├── backend/
-│   ├── __init__.py
-│   ├── config.py                  # Environment variables & constants
-│   ├── train_models.py            # Model training & serialization pipeline
-│   ├── agents/
-│   │   ├── __init__.py
-│   │   ├── detection_agent.py     # Unsupervised stress anomaly scoring
-│   │   ├── restructuring_agent.py # Deterministic debt amortization solver
-│   │   └── outreach_agent.py      # RBI-compliant empathetic LLM generator
-│   ├── data/
-│   │   ├── __init__.py
-│   │   ├── loader.py              # CSV ingestion & type validation
-│   │   └── feature_engineering.py # Stress index, deal reliance, spend-to-income
-│   └── utils/
-│       ├── __init__.py
-│       └── metrics.py             # Portfolio-level risk metrics calculation
-├── frontend/
-│   ├── app.py                     # Main Streamlit command center entrypoint
-│   ├── components/
-│   │   ├── bank_view.py           # Underwriter triage queue & portfolio KPIs
-│   │   └── customer_view.py       # Mobile customer relief simulator
-│   └── styles/
-│       └── custom.css             # Modern clean financial UI styling
-├── integration/                  # UI-to-backend service boundary
-│   ├── __init__.py
-│   └── services.py
-├── tests/
-│   ├── test_features.py           # Unit tests for stress feature calculations
-│   └── test_restructuring.py      # Unit tests for loan mathematical invariance
-├── notebooks/
-│   └── 01_exploratory_stress.ipynb# Model validation & SHAP/anomaly plots
-├── .env.example                   # Template for API keys (e.g., OPENAI_API_KEY)
-├── .gitignore                     # Git exclusions
-├── requirements.txt               # Pinned dependencies
-├── pyproject.toml                 # Package definition & build configs
-└── README.md                      # Comprehensive documentation
-```
-
----
-
-## ⚡ Quickstart Guide
-
-### 1. Clone & Set Up Environment
-```bash
-git clone https://github.com/HarshidGiriver/The-Unorthodox.git
-cd The-Unorthodox
-
-# Create and activate virtual environment
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 2. Configure Environment Variables
-```bash
-cp .env.example .env
-# Edit .env to add your OPENAI_API_KEY (optional, template fallback available)
-```
-
-### 3. Launch Streamlit Command Center
-```bash
-streamlit run frontend/app.py
-```
-Open your browser at `http://localhost:8501`.
-
-### 4. Run Automated Test Suite
-```bash
-pytest tests/ -v
-```
-
-### 5. Retrain Anomaly Detection Models (Optional)
-```bash
-python backend/train_models.py
-```
-
----
-
-## ⚖️ Regulatory Compliance & Disclaimers
-
-FinSafe AI adheres to the following statutory and regulatory standards:
-1. **RBI Fair Practices Code for Lenders (Circular DNBS.CC.PD.No. 266/03.10.01/2011-12)**.
-2. **RBI Guidelines on Digital Lending (2022)**.
-3. All restructuring recommendations represent simulated financial options subject to individual credit policy underwriting approval.
-
----
-
-## 📄 License
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
-## Consolidated project
-
-Run all commands from this single project root. The Kintsugi UI and its matching backend, dataset, models, styles, and assets were migrated from the former nested project.
+Use Python 3.12–3.14 (locally verified on 3.14.7). Exact dependencies are in `requirements-lock.txt`.
 
 ```powershell
-python -m pip install -r requirements.txt
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run frontend/app.py
+```
+
+The demonstration requires no credentials or external API. Financial notices are deterministic; no LLM requests are made.
+
+## Saved workflow setup
+
+The database defaults to `~/.kintsugi/app.sqlite3`; override with `KINTSUGI_DB_PATH`. Keep it outside Git. Local operator commands:
+
+```powershell
+python -m backend.manage init-demo
+python -m backend.manage create-user reviewer --role underwriter
+python -m backend.manage create-user borrower5524 --role borrower --customer-id CUST-5524
 python -m streamlit run frontend/app.py
 ```
 
-`frontend/` contains Streamlit presentation; `backend/` contains configuration, data processing, agents, and model utilities; `integration/` connects the UI to backend services. Shared data, model artifacts, and assets remain at the root. No separate backend server is required.
+Password prompts hide input; minimum length is 12 characters. Passwords use salted PBKDF2-SHA256. No default passwords exist. Sessions expire after one hour; five failed logins lock the username for five minutes. Choose **Application mode → Saved workflow** and sign in separately for each role.
 
-Validation: `python -m pytest`. Train models with `python -m backend.train_models`; regenerate charts with `python -m backend.generate_visualizations`.
+Import real, validated data with `python -m backend.manage import-csv path/to/borrowers.csv`. Imports preserve existing accounts and never overwrite active loan state. See [data contract](docs/DATA_CONTRACT.md).
+
+## Workflow
+
+```text
+Validated data → anomaly review → draft → underwriter decision
+  → borrower reviews exact version → consent → local activation
+  → receipts, delivery tracking and audit history
+```
+
+Saving and approving are separate actions. Approval requires all payments to fit monthly income after expenses. Approval queues notifications; it does not claim delivery. Borrowers see only their own approved/consented/active proposals. Consent stores the immutable terms hash. Activation verifies consent and loan version, updates the local schedule transactionally, and is idempotent.
+
+Create a new draft to revise terms. Competing proposals cannot both activate against the same loan version. Further restructuring after activation, or after receipts exist, is blocked pending servicing reconciliation. Receipt totals are not reconciled principal balances or delinquency metrics.
+
+## Communications
+
+```powershell
+python -m backend.communications --watch
+```
+
+Use `--once` for one eligible item. Default `DELIVERY_MODE=simulate` sends nothing and stores simulation receipts. Generated demo accounts always remain simulated.
+
+For non-simulated accounts, verify contacts through your own process, then attest locally with `python -m backend.manage verify-contact CUSTOMER_ID --email ADDRESS --phone NUMBER`. Verify before approval because delivery snapshots are immutable.
+
+External integration requires `DELIVERY_MODE=webhook`, an HTTPS `DELIVERY_WEBHOOK_URL`, and `DELIVERY_WEBHOOK_TOKEN`. The gateway accepts JSON `{channel, recipient, subject, body}`, bearer authorization and an `Idempotency-Key`. It must durably deduplicate that key and return `{receipt_id: "..."}` on both initial and repeated requests. No provider has been configured or contacted. **Sent** means gateway acceptance, not confirmed inbox/handset delivery.
+
+The worker enforces the configured contact window using `CONTACT_TIMEZONE` (default Asia/Kolkata), `RBI_CALL_HOURS_START` and `RBI_CALL_HOURS_END` (legacy names; not a legal determination). It uses UTC leases, exponential retries, a five-attempt limit and five-minute crash recovery. Duplicate prevention after a timeout/crash depends on gateway idempotency. UI queue states and audit events distinguish simulated, sent, retry and failed results.
+
+## Data and model evidence
+
+The bundled CSV has 2,240 marketing records and 29 source columns. Attribution retained from the original project: [Customer Personality Analysis](https://www.kaggle.com/datasets/imakash3011/customer-personality-analysis). Verify upstream license terms before redistribution.
+
+Income and category totals become monthly INR simulation inputs, without asserting verified source units. Identities, loans, savings, utilization and late days are generated. Missing Income is imputed. The baseline loan is INR 300,000, 14% APR, 24 months, EMI **14,403.86**, plus a final rounding adjustment.
+
+```powershell
+python -m backend.train_models
+python -m backend.train_models --data path/to/observed_borrowers.csv
+python -m backend.generate_visualizations
+```
+
+Training evaluates an independent 70/30 holdout before refitting final artifacts. With `snapshot_date`, it uses chronological splitting. Non-simulation inputs may supply observed 0/1 `observed_default` labels for precision, recall, F1 and ROC AUC. Operators must validate outcome horizons and leakage.
+
+`models/isolation_forest.metadata.json` records dataset/artifact hashes, feature contract, dependency versions and evaluation. Loading verifies artifact pairing. Missing/incompatible artifacts produce a visible heuristic warning. Explicitly missing input paths fail; only an absent bundled CSV triggers labelled synthetic fallback.
+
+Demo holdout: 1,568 training / 672 evaluation records; 15.625% model anomaly rate; 1.488% rules flag rate; 85.863% agreement. These are descriptive, not predictive accuracy. No observed defaults exist in this demo, and generated relationships partly determine anomaly separation.
+
+## Code and checks
+
+`frontend/` holds both modes and styles. `integration/services.py` constructs services. `backend/data/` validates and transforms input; `finance.py` and `agents/` calculate and score. `storage.py`, `auth.py`, `workflow.py` persist decisions. `communications.py`, `manage.py`, `observability.py` provide queue, operator and logging functions. `evaluation.py` and `train_models.py` record evidence.
+
+```powershell
+python -m pytest
+python -m flake8 backend frontend integration tests --select=E9,F63,F7,F82
+python -m build
+python -m backend.manage health
+```
+
+The wheel includes data, models/metadata, images and CSS. Install it and run `kintsugi`. CI checks Python 3.12–3.14, tests, lint, build and installed-resource loading. Test success does not imply complete coverage.
+
+CORS/XSRF protection is enabled. Remote deployment requires HTTPS and host/database access controls. SQLite targets a modest single-host deployment. Use SQLite-consistent backups. Logs omit borrower payloads and message bodies. No production hosting is configured.
+
+See [implementation status](docs/IMPLEMENTATION_STATUS.md). `PROJECT_ANALYSIS.md` remains the historical pre-change audit.

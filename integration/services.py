@@ -21,3 +21,10 @@ __all__ = [
 def load_and_score_portfolio():
     """Load the configured customer data and calculate portfolio distress scores."""
     return StressDetectionAgent().analyze_portfolio(load_customer_data())
+
+
+def application_workflow():
+    """Construct services for the configured persistent local database."""
+    from backend.storage import Database
+    from backend.workflow import Workflow
+    return Workflow(Database())

@@ -1,4 +1,4 @@
-"""Configuration and constants for FinSafe AI."""
+"""Configuration and constants for Kintsugi AI."""
 
 from pathlib import Path
 import os
@@ -9,9 +9,11 @@ load_dotenv()
 
 # Base paths
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
+RESOURCE_DIR = BASE_DIR if (BASE_DIR / "data" / "raw").exists() else Path(__file__).parent / "resources"
+ASSETS_DIR = RESOURCE_DIR / "assets"
+DATA_DIR = RESOURCE_DIR / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
-MODELS_DIR = BASE_DIR / "models"
+MODELS_DIR = RESOURCE_DIR / "models"
 
 # Default Model file paths
 ISOLATION_FOREST_PATH = Path(os.getenv("ISOLATION_FOREST_MODEL_PATH", MODELS_DIR / "isolation_forest.joblib"))
@@ -25,12 +27,13 @@ OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
 # RBI Regulatory Compliance Constants
 RBI_CALL_HOURS_START = os.getenv("RBI_CALL_HOURS_START", "08:00")
 RBI_CALL_HOURS_END = os.getenv("RBI_CALL_HOURS_END", "19:00")
-BANK_NAME = os.getenv("BANK_NAME", "FinSafe Commercial Bank Ltd.")
-BANK_GRIEVANCE_OFFICER_NAME = os.getenv("BANK_GRIEVANCE_OFFICER_NAME", "Aditi Sharma")
-BANK_GRIEVANCE_OFFICER_EMAIL = os.getenv("BANK_GRIEVANCE_OFFICER_EMAIL", "grievance@finsafe-bank.in")
-BANK_GRIEVANCE_OFFICER_PHONE = os.getenv("BANK_GRIEVANCE_OFFICER_PHONE", "+91-1800-425-0099")
+BANK_NAME = os.getenv("BANK_NAME", "Kintsugi Demo Bank")
+BANK_GRIEVANCE_OFFICER_NAME = os.getenv("BANK_GRIEVANCE_OFFICER_NAME", "Demo Support")
+BANK_GRIEVANCE_OFFICER_EMAIL = os.getenv("BANK_GRIEVANCE_OFFICER_EMAIL", "support@example.invalid")
+BANK_GRIEVANCE_OFFICER_PHONE = os.getenv("BANK_GRIEVANCE_OFFICER_PHONE", "Not configured")
 
 # Feature Constants
+FEATURE_SCHEMA_VERSION = "2-monthly-demo-consistent-emi"
 FEATURE_COLUMNS = [
     "spend_to_income_ratio",
     "emi_burden_ratio",

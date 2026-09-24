@@ -1,4 +1,4 @@
-"""Multi-agent framework for FinSafe AI."""
+"""Multi-agent framework for Kintsugi AI."""
 
 from .detection_agent import StressDetectionAgent
 from .restructuring_agent import DebtRestructuringAgent

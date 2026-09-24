@@ -1,1 +1,1 @@
-"""FinSafe AI Test Suite."""
+"""Kintsugi AI Test Suite."""

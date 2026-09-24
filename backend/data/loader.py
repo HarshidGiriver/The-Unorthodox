@@ -1,10 +1,11 @@
-"""Data ingestion, schema validation, and synthetic data generation for FinSafe AI."""
+"""Data ingestion, schema validation, and synthetic data generation for Kintsugi AI."""
 
 from typing import Tuple, List, Optional
 from pathlib import Path
 import numpy as np
 import pandas as pd
 from backend.config import RAW_DATA_DIR
+from backend.finance import BASELINE_EMI, calculate_emi
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -32,8 +33,43 @@ def validate_schema(df: pd.DataFrame) -> Tuple[bool, List[str]]:
     Returns:
         Tuple of (is_valid, list_of_missing_columns).
     """
-    missing = [col for col in REQUIRED_COLUMNS if col not in df.columns]
-    return len(missing) == 0, missing
+    errors = [f"Missing column: {col}" for col in REQUIRED_COLUMNS if col not in df.columns]
+    if errors:
+        return False, errors
+    if df.empty:
+        errors.append("Dataset is empty")
+    for col in ("customer_id", "name"):
+        if df[col].isna().any() or not df[col].map(lambda v: isinstance(v, str) and bool(v.strip())).all():
+            errors.append(f"{col} must contain nonempty text")
+    if df["customer_id"].duplicated().any():
+        errors.append("customer_id must be unique")
+    for col in REQUIRED_COLUMNS[2:]:
+        values = pd.to_numeric(df[col], errors="coerce")
+        if not np.isfinite(values.to_numpy(dtype=float)).all():
+            errors.append(f"{col} must contain finite numeric values with no missing entries")
+            continue
+        minimum = 0.01 if col in ("current_emi", "remaining_principal") else 0
+        maximum = {"annual_interest_rate": 1, "deal_purchase_ratio": 1,
+                   "credit_utilization": 2, "remaining_tenure_months": 1200,
+                   "late_payment_days_last_6m": 184}.get(col)
+        if (values < minimum).any() or (maximum is not None and (values > maximum).any()):
+            errors.append(f"{col} is outside the allowed range")
+        if col in ("remaining_tenure_months", "late_payment_days_last_6m"):
+            if (values % 1 != 0).any() or (col == "remaining_tenure_months" and (values < 1).any()):
+                errors.append(f"{col} must contain valid whole numbers")
+    return not errors, errors
+
+
+def normalize_customers(df):
+    valid, errors = validate_schema(df)
+    if not valid:
+        raise ValueError("Invalid borrower data: " + "; ".join(errors))
+    result = df.copy()
+    for col in REQUIRED_COLUMNS[2:]:
+        result[col] = pd.to_numeric(result[col])
+    for col in ("remaining_tenure_months", "late_payment_days_last_6m"):
+        result[col] = result[col].astype(int)
+    return result
 
 
 def load_raw_delimited_csv(file_path: Path) -> pd.DataFrame:
@@ -59,7 +95,7 @@ def load_raw_delimited_csv(file_path: Path) -> pd.DataFrame:
 
 
 def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
-    """Map raw marketing campaign attributes to FinSafe borrower schema.
+    """Map raw marketing campaign attributes to Kintsugi borrower schema.
 
     Transformations:
     - monthly_income = Income (treated directly as monthly income, no division by 12)
@@ -67,7 +103,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     - deal_purchase_ratio = NumDealsPurchases / (NumWebPurchases + NumStorePurchases + NumCatalogPurchases + 0.001)
     - dependents = Kidhome + Teenhome
     - Synthesizes realistic baseline loan parameters:
-      remaining_principal = 300,000, current_emi = 14,400, remaining_tenure_months = 24, annual_interest_rate = 0.14
+      remaining_principal = 300,000, current_emi = 14,403.86, remaining_tenure_months = 24, annual_interest_rate = 0.14
     - Calibrates liquid buffers, credit utilization, and borrower identities.
 
     Args:
@@ -77,6 +113,19 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         Standardized DataFrame adhering to REQUIRED_COLUMNS.
     """
     df = df_raw.copy()
+    needed = ["ID", "Income", "NumDealsPurchases", "NumWebPurchases", "NumStorePurchases", "NumCatalogPurchases"]
+    missing = [c for c in needed if c not in df]
+    if missing:
+        raise ValueError(f"Marketing data is missing columns: {missing}")
+    numeric = needed + [c for c in df if c.startswith("Mnt") or c in ("Kidhome", "Teenhome", "Complain")]
+    for col in numeric:
+        original = df[col]
+        df[col] = pd.to_numeric(original, errors="coerce")
+        invalid_missing = df[col].isna() & (original.notna() if col == "Income" else True)
+        if invalid_missing.any() or np.isinf(df[col]).any() or (df[col].dropna() < 0).any():
+            raise ValueError(f"Invalid marketing field: {col}")
+    if df["ID"].duplicated().any() or (df["ID"] % 1 != 0).any():
+        raise ValueError("Marketing ID must contain unique integers")
 
     # 1. Impute missing Income with median and compute monthly_income (treated directly as monthly income)
     median_income = float(df["Income"].dropna().median()) if not df["Income"].dropna().empty else 50000.0
@@ -108,21 +157,21 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         discretionary_ratio = pd.Series([0.55] * len(df))
 
     # 3. Compute deal_purchase_ratio
-    deals = df.get("NumDealsPurchases", 0).astype(float)
-    web = df.get("NumWebPurchases", 0).astype(float)
-    store = df.get("NumStorePurchases", 0).astype(float)
-    catalog = df.get("NumCatalogPurchases", 0).astype(float)
+    deals = df.get("NumDealsPurchases", pd.Series(0, index=df.index)).astype(float)
+    web = df.get("NumWebPurchases", pd.Series(0, index=df.index)).astype(float)
+    store = df.get("NumStorePurchases", pd.Series(0, index=df.index)).astype(float)
+    catalog = df.get("NumCatalogPurchases", pd.Series(0, index=df.index)).astype(float)
     total_purchases = web + store + catalog + 0.001
     deal_purchase_ratio = np.clip(deals / total_purchases, 0.0, 1.0)
 
     # 4. Dependents
-    kids = df.get("Kidhome", 0).astype(int)
-    teens = df.get("Teenhome", 0).astype(int)
+    kids = df.get("Kidhome", pd.Series(0, index=df.index)).astype(int)
+    teens = df.get("Teenhome", pd.Series(0, index=df.index)).astype(int)
     dependents = kids + teens
 
     # 5. Baseline loan parameters (300k principal, 14.4k EMI, 24 mos tenure, 14% APR)
     remaining_principal = 300000.0
-    current_emi = 14400.0
+    current_emi = BASELINE_EMI
     remaining_tenure = 24
     annual_rate = 0.14
 
@@ -204,7 +253,10 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     for col, val in records.items():
         result_df[col] = val
 
-    return result_df
+    result_df.attrs.update(data_source="marketing_simulation", simulation=True,
+                           data_warning="Marketing records with generated identities, loans, savings, utilization and late days; not real borrower accounts.",
+                           imputed_income_count=int(df_raw["Income"].isna().sum()))
+    return normalize_customers(result_df)
 
 
 def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) -> pd.DataFrame:
@@ -290,6 +342,7 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
             late_days = int(np.random.choice([5, 12, 18, 25, 40]))
             dependents = int(np.random.choice([1, 2, 3]))
 
+        current_emi = calculate_emi(remaining_principal, annual_rate, remaining_tenure)
         records.append({
             "customer_id": cust_id,
             "name": name,
@@ -310,7 +363,9 @@ def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) ->
         })
 
     df = pd.DataFrame(records)
-    return df
+    df.attrs.update(data_source="synthetic_fallback", simulation=True,
+                    data_warning=f"Using {n_samples} entirely synthetic demo accounts; no observed borrower finances.")
+    return normalize_customers(df)
 
 
 def load_customer_data(file_path: Optional[str] = None) -> pd.DataFrame:
@@ -331,6 +386,8 @@ def load_customer_data(file_path: Optional[str] = None) -> pd.DataFrame:
 
     if file_path is not None:
         target_path = Path(file_path)
+        if not target_path.is_file():
+            raise FileNotFoundError(f"Requested customer dataset does not exist: {target_path}")
     else:
         campaign_candidates = [
             RAW_DATA_DIR / "marketing_campaign.csv",
@@ -352,8 +409,7 @@ def load_customer_data(file_path: Optional[str] = None) -> pd.DataFrame:
     else:
         df_processed = df_raw
 
-    is_valid, missing = validate_schema(df_processed)
-    if not is_valid:
-        raise ValueError(f"CSV {target_path} is missing required schema columns: {missing}")
-
+    df_processed = normalize_customers(df_processed)
+    df_processed.attrs.setdefault("data_source", "provided_borrower_data")
+    df_processed.attrs.setdefault("simulation", False)
     return df_processed
