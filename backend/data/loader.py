@@ -4,7 +4,7 @@ from typing import Tuple, List, Optional
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from src.config import RAW_DATA_DIR, BASE_DIR
+from backend.config import RAW_DATA_DIR
 
 REQUIRED_COLUMNS = [
     "customer_id",
@@ -62,8 +62,8 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     """Map raw marketing campaign attributes to FinSafe borrower schema.
 
     Transformations:
-    - monthly_income = Income / 12 (missing income imputed with median)
-    - monthly_expenses = (MntWines + MntFruits + MntMeatProducts + MntFishProducts + MntSweetProducts + MntGoldProds) / 12
+    - monthly_income = Income (treated directly as monthly income, no division by 12)
+    - monthly_expenses = (MntWines + MntFruits + MntMeatProducts + MntFishProducts + MntSweetProducts + MntGoldProds)
     - deal_purchase_ratio = NumDealsPurchases / (NumWebPurchases + NumStorePurchases + NumCatalogPurchases + 0.001)
     - dependents = Kidhome + Teenhome
     - Synthesizes realistic baseline loan parameters:
@@ -78,10 +78,10 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     df = df_raw.copy()
 
-    # 1. Impute missing Income with median and compute monthly_income
+    # 1. Impute missing Income with median and compute monthly_income (treated directly as monthly income)
     median_income = float(df["Income"].dropna().median()) if not df["Income"].dropna().empty else 50000.0
     income = df["Income"].fillna(median_income).astype(float)
-    monthly_income = np.maximum(income / 12.0, 100.0)
+    monthly_income = np.maximum(income, 100.0)
 
     # 2. Compute monthly_expenses from Mnt purchase columns
     mnt_cols = [
@@ -95,7 +95,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
     present_mnt = [c for c in mnt_cols if c in df.columns]
     if present_mnt:
         total_spent = df[present_mnt].sum(axis=1).astype(float)
-        monthly_expenses = np.maximum(total_spent / 12.0, 10.0)
+        monthly_expenses = np.maximum(total_spent, 10.0)
     else:
         monthly_expenses = monthly_income * 0.45
 
@@ -150,7 +150,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     # 7. Savings buffers, depletion rate, credit utilization, late days
     # Distress behavior: high deal purchases (>0.40) correlates with cashflow strain
-    deal_vals = deal_purchase_ratio.values
+    deal_vals = deal_purchase_ratio.to_numpy(dtype=float, copy=True)
     is_strained = deal_vals > 0.40
 
     buffer_multiplier = np.where(
@@ -173,7 +173,7 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         rng.uniform(0.18, 0.52, n_samples),
     )
 
-    complain = df.get("Complain", pd.Series([0] * n_samples)).values
+    complain = df.get("Complain", pd.Series([0] * n_samples)).to_numpy(copy=True)
     late_days = np.where(
         (deal_vals > 0.50) | (complain == 1),
         rng.choice([5, 12, 18, 25, 35], n_samples),
@@ -199,7 +199,12 @@ def parse_marketing_campaign(df_raw: pd.DataFrame) -> pd.DataFrame:
         "discretionary_ratio": np.round(discretionary_ratio.values, 4),
     }
 
-    return pd.DataFrame(records)
+    # Retain all original raw columns from marketing_campaign.csv
+    result_df = df_raw.copy()
+    for col, val in records.items():
+        result_df[col] = val
+
+    return result_df
 
 
 def generate_synthetic_customers(n_samples: int = 300, random_seed: int = 42) -> pd.DataFrame:
@@ -314,8 +319,7 @@ def load_customer_data(file_path: Optional[str] = None) -> pd.DataFrame:
     Search priority:
     1. Explicit file_path argument if provided.
     2. RAW_DATA_DIR / 'marketing_campaign.csv'
-    3. BASE_DIR.parent / 'data' / 'raw' / 'marketing_campaign.csv'
-    4. Fallback: generate synthetic customer dataset in memory.
+    3. Fallback: generate synthetic customer dataset in memory.
 
     Args:
         file_path: Optional path to CSV file.
@@ -330,7 +334,6 @@ def load_customer_data(file_path: Optional[str] = None) -> pd.DataFrame:
     else:
         campaign_candidates = [
             RAW_DATA_DIR / "marketing_campaign.csv",
-            BASE_DIR.parent / "data" / "raw" / "marketing_campaign.csv",
         ]
         for candidate in campaign_candidates:
             if candidate.exists():

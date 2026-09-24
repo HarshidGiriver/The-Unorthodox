@@ -3,7 +3,7 @@
 from typing import Union
 import numpy as np
 import pandas as pd
-from src.config import FEATURE_COLUMNS
+from backend.config import FEATURE_COLUMNS
 
 EPSILON = 1e-5
 
@@ -37,12 +37,12 @@ def compute_stress_features(data: Union[pd.DataFrame, dict, pd.Series]) -> pd.Da
     # Pre-mapping convenience if raw marketing campaign columns are supplied directly
     if "monthly_income" not in df.columns and "Income" in df.columns:
         med = float(df["Income"].dropna().median()) if not df["Income"].dropna().empty else 50000.0
-        df["monthly_income"] = np.maximum(df["Income"].fillna(med).astype(float) / 12.0, 100.0)
+        df["monthly_income"] = np.maximum(df["Income"].fillna(med).astype(float), 100.0)
 
     mnt_cols = ["MntWines", "MntFruits", "MntMeatProducts", "MntFishProducts", "MntSweetProducts", "MntGoldProds"]
     if "monthly_expenses" not in df.columns and any(c in df.columns for c in mnt_cols):
         present_mnt = [c for c in mnt_cols if c in df.columns]
-        df["monthly_expenses"] = df[present_mnt].sum(axis=1).astype(float) / 12.0
+        df["monthly_expenses"] = df[present_mnt].sum(axis=1).astype(float)
 
     if "deal_purchase_ratio" not in df.columns and "NumDealsPurchases" in df.columns:
         deals = df.get("NumDealsPurchases", 0).astype(float)

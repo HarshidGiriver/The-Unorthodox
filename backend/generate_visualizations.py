@@ -22,9 +22,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from src.config import BASE_DIR, FEATURE_COLUMNS, TIER_1_LOW_RISK_MAX, TIER_2_MODERATE_STRESS_MAX
-from src.data.loader import load_customer_data
-from src.agents.detection_agent import StressDetectionAgent
+from backend.config import BASE_DIR, FEATURE_COLUMNS, TIER_1_LOW_RISK_MAX, TIER_2_MODERATE_STRESS_MAX
+from backend.data.loader import load_customer_data
+from backend.agents.detection_agent import StressDetectionAgent
 
 # Output directory for assets
 ASSETS_DIR = BASE_DIR / "assets"
@@ -411,7 +411,7 @@ def run_pipeline() -> Tuple[pd.DataFrame, Dict[str, Any]]:
 
     # 1. Ingestion
     start_time = time.perf_counter()
-    print("\n[1/4] Ingesting customer data via src.data.loader.load_customer_data()...")
+    print("\n[1/4] Ingesting customer data via backend.data.loader.load_customer_data()...")
     df = load_customer_data()
     n_rows = len(df)
     n_cols = df.shape[1]

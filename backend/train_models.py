@@ -10,9 +10,9 @@ import joblib
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import RobustScaler
 
-from src.config import MODELS_DIR, ISOLATION_FOREST_PATH, SCALER_PATH, FEATURE_COLUMNS
-from src.data.loader import load_customer_data
-from src.data.feature_engineering import compute_stress_features, get_feature_matrix
+from backend.config import MODELS_DIR, ISOLATION_FOREST_PATH, SCALER_PATH, FEATURE_COLUMNS
+from backend.data.loader import load_customer_data
+from backend.data.feature_engineering import compute_stress_features, get_feature_matrix
 
 
 def train_and_save_models():

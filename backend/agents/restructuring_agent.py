@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 import numpy as np
 import pandas as pd
 
-from src.config import (
+from backend.config import (
     MAX_TENURE_EXTENSION_MONTHS,
     MAX_RATE_CONCESSION_BPS,
     MAX_MORATORIUM_MONTHS,

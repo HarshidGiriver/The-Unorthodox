@@ -1,7 +1,7 @@
 """Unit tests for loan restructuring mathematical invariance."""
 
 import pytest
-from src.agents.restructuring_agent import DebtRestructuringAgent
+from backend.agents.restructuring_agent import DebtRestructuringAgent
 
 
 def test_emi_calculation_formula():

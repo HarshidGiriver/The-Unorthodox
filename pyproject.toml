@@ -45,3 +45,9 @@ addopts = "-v --strict-markers"
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
 exclude = [".git", "__pycache__", "build", "dist", ".venv"]
+
+[tool.setuptools.packages.find]
+include = ["frontend*", "backend*", "integration*"]
+
+[tool.setuptools.package-data]
+frontend = ["styles/*.css"]

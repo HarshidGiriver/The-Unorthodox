@@ -6,14 +6,14 @@ import numpy as np
 import pandas as pd
 import joblib
 
-from src.config import (
+from backend.config import (
     ISOLATION_FOREST_PATH,
     SCALER_PATH,
     FEATURE_COLUMNS,
     TIER_1_LOW_RISK_MAX,
     TIER_2_MODERATE_STRESS_MAX,
 )
-from src.data.feature_engineering import compute_stress_features, get_feature_matrix
+from backend.data.feature_engineering import compute_stress_features, get_feature_matrix
 
 
 class StressDetectionAgent:

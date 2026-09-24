@@ -41,4 +41,4 @@ jobs:
 
       - name: Verify package structure
         run: |
-          python -c "import src; import src.agents; import src.data; import src.utils; print('Package structure verified successfully!')"
+          python -c "import backend; import backend.agents; import backend.data; import backend.utils; print('Package structure verified successfully!')"
