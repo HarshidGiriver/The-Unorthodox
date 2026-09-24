@@ -7,6 +7,78 @@ Streamlit application for borrower anomaly review and voluntary repayment propos
 
 This is a local prototype, not a core banking integration or certified compliance product. Anomaly indicators are not probabilities of default. Sample contacts are placeholders.
 
+## Architecture
+
+The UI and application services run in one Streamlit process. SQLite stores the saved workflow; a separate worker processes its notification outbox. Dashed connections below represent optional external delivery.
+
+```mermaid
+flowchart TB
+    subgraph UI["Presentation — frontend/"]
+        DEMO["Demonstration<br/>Portfolio triage and relief simulator"]
+        SAVED["Saved workflow<br/>Underwriter and borrower screens"]
+    end
+
+    subgraph APP["Application — integration/ and backend/"]
+        SERVICES["Application services<br/>integration/services.py"]
+        AUTH["Authentication and permissions<br/>backend/auth.py"]
+        WORKFLOW["Proposal lifecycle<br/>backend/workflow.py"]
+        SOLVER["Validated EMI and amortization<br/>backend/finance.py and agents/"]
+        SCORE["Anomaly scoring<br/>Isolation Forest or explicit heuristic fallback"]
+        FEATURES["Validation and feature engineering<br/>backend/data/"]
+    end
+
+    subgraph DATA["Data and model pipeline"]
+        CSV["Marketing demo CSV<br/>or supplied borrower records"]
+        TRAIN["Separate holdout evaluation<br/>then full-data model training"]
+        ARTIFACTS["Scaler, model and provenance<br/>models/"]
+    end
+
+    subgraph STORAGE["Persistent local state — SQLite"]
+        DB[("Borrowers and loans<br/>Users and sessions<br/>Versioned proposals and decisions<br/>Consent, schedules and audit history<br/>Payment receipts")]
+        OUTBOX[("Email and SMS outbox<br/>Immutable notices and delivery status")]
+    end
+
+    subgraph DELIVERY["Separate delivery process — backend/communications.py"]
+        WORKER["Timezone window and worker leases<br/>Bounded retries and stable idempotency keys"]
+        SIMULATED["Default: simulated receipt<br/>Always used for demo accounts"]
+        GATEWAY["Optional HTTPS email/SMS gateway<br/>Verified contacts and credentials required"]
+    end
+
+    DEMO --> SERVICES
+    SAVED --> AUTH
+    AUTH <--> DB
+    AUTH --> SERVICES
+    SERVICES --> WORKFLOW
+    SERVICES --> SCORE
+    SERVICES --> SOLVER
+    CSV --> FEATURES
+    FEATURES --> SCORE
+    FEATURES --> TRAIN
+    TRAIN --> ARTIFACTS
+    ARTIFACTS --> SCORE
+    FEATURES -->|Local operator import| DB
+    DB -->|Authorized borrower profiles| SCORE
+    WORKFLOW --> SCORE
+    WORKFLOW --> SOLVER
+    WORKFLOW <--> DB
+    WORKFLOW -->|Approved proposal: deterministic notices| OUTBOX
+    OUTBOX --> WORKER
+    WORKER --> SIMULATED
+    WORKER -.->|Explicit external configuration| GATEWAY
+    SIMULATED -->|Simulation receipt| OUTBOX
+    GATEWAY -.->|Acceptance receipt or retry| OUTBOX
+    WORKER -->|Audit events| DB
+
+    classDef presentation fill:#F5EFE6,stroke:#C5A880,color:#08201A;
+    classDef logic fill:#E2EDE7,stroke:#0A523E,color:#08201A;
+    classDef external fill:#FFF4DB,stroke:#A16B12,color:#49320A;
+    class DEMO,SAVED presentation;
+    class SERVICES,AUTH,WORKFLOW,SOLVER,SCORE,FEATURES,TRAIN,WORKER logic;
+    class GATEWAY external;
+```
+
+The demonstration previews do not persist approvals. Saved-workflow service methods enforce roles and account ownership on every action; the authentication node is not the sole authorization boundary. Approval queues notices independently of borrower consent and activation. Activation updates only the local loan schedule, and a gateway receipt means acceptance rather than confirmed inbox/handset delivery. No core banking connection is implemented.
+
 ## Run
 
 Use Python 3.12–3.14 (locally verified on 3.14.7). Exact dependencies are in `requirements-lock.txt`.
